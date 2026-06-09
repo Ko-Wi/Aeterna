@@ -23,22 +23,36 @@ public class MyObject : MonoBehaviour
     }
     /*************************************************************************************/
 
-
+    public int ForgeLevel = 1;
+    [Header("Àåºñ ÀÎµ¦½º")]
     public PartsCategory[] categories;
 
-    public int EyeIndex = 0;
+    public int EyeIndex = -1;
     public int HairIndex = -1;
-    public int HelmetIndex = -1;
     public int BeardIndex = -1;
+
+    public int HelmetIndex = -1;
     public int ChestIndex = -1;
 
     [Header("ÀåÂø ÁßÀÎ ÆÄÃ÷ ÀÎµ¦½º (-1 = ¹ÌÂø¿ë)")]
     public PartsType WeaponType;
     public int WeaponIndex = -1;
-
     public PartsType LeftItemType;
     public int LeftItemIndex = -1;
 
+    public int GloveIndex = -1;
+    public int BootsIndex = -1;
+    public int RingIndex = -1;
+    public int EarringIndex = -1;
+    public int BeltIndex = -1;
+
+    [Header("ÄÚ½ºÆ¬ ÀÎµ¦½º")]
+    public PartsType CostumeWeaponType;
+    public int CostumeWeapon = -1;
+    public PartsType CostumeLeftItemType;
+    public int CostumeLeftItemIndex = -1;
+    public int CostumeChestIndex = -1;
+    public int CostumeHelmetIndex = -1;
     private void Awake()
     {
         if (s_MyObject != null && s_MyObject != this)

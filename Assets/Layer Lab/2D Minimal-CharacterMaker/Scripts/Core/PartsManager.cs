@@ -56,12 +56,12 @@ namespace LayerLab.ArtMakerUnity
         private Dictionary<PartsType, PartsCategory> categoryMap;
 
         /// <summary>
-        /// Initializes all categories, indices, visibility, colors, and applies default sprites.
-        /// Must be called before any other operation.
+        /// 모든 카테고리, 인덱스, 표시 상태, 색상을 초기화하고 기본 스프라이트를 적용합니다.
+        /// 다른 작업을 실행하기 전에 반드시 호출해야 합니다.
         /// </summary>
         public void Init()
         {
-            // Initialize lookup dictionaries
+            // 조회용 딕셔너리 초기화
             categoryMap = new Dictionary<PartsType, PartsCategory>();
             ActiveIndices.Clear();
             Visibility.Clear();
@@ -69,28 +69,30 @@ namespace LayerLab.ArtMakerUnity
 
             if (categories == null) return;
 
-            // Register each category and set default index/visibility
+            // 각 카테고리를 등록하고 기본 인덱스/표시 상태 설정
             foreach (var cat in categories)
             {
                 categoryMap[cat.type] = cat;
                 ActiveIndices[cat.type] = 0;
                 Visibility[cat.type] = true;
 
-                // Beard always supports color changes
+                // Beard는 항상 색상 변경을 지원합니다.
                 if (cat.type == PartsType.Beard && !cat.canChangeColor)
                 {
                     cat.canChangeColor = true;
                     cat.colorTarget = ColorTargetType.Beard;
                 }
-                // Eye does not support color changes
+
+                // Eye는 색상 변경을 지원하지 않습니다.
                 if (cat.type == PartsType.Eye)
                     cat.canChangeColor = false;
             }
 
-            // For group categories, only the first sub-type is visible; the rest are hidden
+            // 그룹 카테고리는 첫 번째 하위 타입만 표시하고, 나머지는 숨깁니다.
             foreach (UICategory uiCat in Enum.GetValues(typeof(UICategory)))
             {
                 if (!UICategoryConfig.IsGroup(uiCat)) continue;
+
                 var subTypes = UICategoryConfig.GetSubTypes(uiCat);
                 for (int i = 1; i < subTypes.Length; i++)
                 {
@@ -99,35 +101,35 @@ namespace LayerLab.ArtMakerUnity
                 }
             }
 
-            // Arrow is hidden by default (only shown when Bow or Crossbow is equipped)
+            // Arrow는 기본적으로 숨깁니다. Bow 또는 Crossbow를 장착했을 때만 표시됩니다.
             if (Visibility.ContainsKey(PartsType.Arrow))
                 Visibility[PartsType.Arrow] = false;
 
-            // HelmetHair is hidden by default (only shown when Helmet is equipped)
+            // HelmetHair는 기본적으로 숨깁니다. Helmet을 장착했을 때만 표시됩니다.
             if (Visibility.ContainsKey(PartsType.HelmetHair))
                 Visibility[PartsType.HelmetHair] = false;
 
-            // Set default colors to white
+            // 기본 색상을 흰색으로 설정
             Colors[ColorTargetType.Skin] = Color.white;
             Colors[ColorTargetType.Hair] = Color.white;
             Colors[ColorTargetType.Eye] = Color.white;
             Colors[ColorTargetType.Beard] = Color.white;
 
-            // Auto-detect color renderers if not assigned in the Inspector
+            // Inspector에 할당되지 않은 경우 색상 변경 대상 Renderer를 자동으로 감지합니다.
             // AutoMapColorRenderers();
 
-            // Apply initial sprites and visibility state to all categories
-            foreach (var cat in categories)
-            {
-                ApplySprites(cat, 0);
+            // 모든 카테고리에 초기 스프라이트와 표시 상태를 적용합니다.
+            //foreach (var cat in categories)
+            //{
+            //    ApplySprites(cat, 0);
 
-                // Enable/disable GameObjects based on visibility state
-                bool visible = Visibility.TryGetValue(cat.type, out var v) && v;
-                if (cat.canToggle)
-                    SetRenderersActive(cat, visible);
-            }
+            //    // 표시 상태에 따라 GameObject를 활성화/비활성화합니다.
+            //    bool visible = Visibility.TryGetValue(cat.type, out var v) && v;
+            //    if (cat.canToggle)
+            //        SetRenderersActive(cat, visible);
+            //}
 
-            // Sync HelmetHair visibility based on initial Helmet and Hair state
+            // 초기 Helmet과 Hair 상태를 기준으로 HelmetHair 표시 여부를 동기화합니다.
             SyncHelmetHairVisibility();
         }
 
@@ -463,10 +465,10 @@ namespace LayerLab.ArtMakerUnity
         }
 
         /// <summary>
-        /// Shows or hides HelmetHair and Hair based on Helmet visibility and Hair toggle state.
-        /// When Helmet is visible and Hair is wanted, Hair is hidden and HelmetHair is shown.
-        /// When Helmet is not visible, Hair is shown and HelmetHair is hidden.
-        /// When Hair is toggled off, both Hair and HelmetHair are hidden.
+        /// Helmet의 표시 여부와 Hair 토글 상태에 따라 HelmetHair와 Hair를 표시하거나 숨깁니다.
+        /// Helmet이 표시되어 있고 Hair를 표시하려는 상태라면, Hair는 숨기고 HelmetHair를 표시합니다.
+        /// Helmet이 표시되어 있지 않으면, Hair를 표시하고 HelmetHair는 숨깁니다.
+        /// Hair 토글이 꺼져 있으면, Hair와 HelmetHair를 모두 숨깁니다.
         /// </summary>
         private void SyncHelmetHairVisibility()
         {

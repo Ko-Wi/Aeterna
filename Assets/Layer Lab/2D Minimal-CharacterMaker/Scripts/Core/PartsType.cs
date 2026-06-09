@@ -25,7 +25,8 @@ namespace LayerLab.ArtMakerUnity
         SubItem,
         Arrow,
         HelmetHair,
-        Skin
+        Skin,
+        Wing
     }
 
     /// <summary>

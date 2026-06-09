@@ -51,10 +51,12 @@ public class PlayerController : MonoBehaviour
     }
     public void Init()
     {
+        myChar = MyObject.MyChar;
+
         if (partsManager != null)
             partsManager.Init();
         
-        myChar = MyObject.MyChar;
+        UnequipAllParts();    
     }
     // Update is called once per frame
     void Update()
@@ -112,8 +114,9 @@ public class PlayerController : MonoBehaviour
             // 굳이 건너뛰고 싶으면 continue 처리 가능
             partsManager.UnequipParts(type);
         }
+        if (myChar.EyeIndex >= 0)
+            partsManager.EquipParts(PartsType.Eye, myChar.EyeIndex);
 
-        partsManager.EquipParts(PartsType.Eye, 0);
         //색상 초기화
         partsManager.SetColor(ColorTargetType.Skin, Color.white);
         partsManager.SetColor(ColorTargetType.Hair, Color.white);
@@ -257,6 +260,7 @@ public class PlayerController : MonoBehaviour
 
         MonsterController monster = target.GetComponent<MonsterController>();
     }
+
     private void EndAttack()
     {
         isAttacking = false;

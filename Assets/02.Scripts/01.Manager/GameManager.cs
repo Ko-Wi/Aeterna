@@ -37,3 +37,18 @@ public class GameManager : MonoBehaviour
         
     }
 }
+
+public enum EquipmentSlotType
+{
+    Wand,
+    Staff,
+
+    Helmet,
+    Chest,
+    Glove,
+    Boots,
+    Ring,
+    Earring,
+    Belt,
+    Shield
+}
