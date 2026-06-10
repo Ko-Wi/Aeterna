@@ -1,4 +1,5 @@
 using LayerLab.ArtMakerUnity;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class MyObject : MonoBehaviour
@@ -53,6 +54,9 @@ public class MyObject : MonoBehaviour
     public int CostumeLeftItemIndex = -1;
     public int CostumeChestIndex = -1;
     public int CostumeHelmetIndex = -1;
+
+    public List<OwnedEquipment> OwnedEquipments = new List<OwnedEquipment>();
+
     private void Awake()
     {
         if (s_MyObject != null && s_MyObject != this)
@@ -72,5 +76,17 @@ public class MyObject : MonoBehaviour
     private void Update()
     {
         
+    }
+}
+[System.Serializable]
+public class OwnedEquipment
+{
+    public EquipmentSlotType SlotType;
+    public int Index;
+
+    public OwnedEquipment(EquipmentSlotType slotType, int index)
+    {
+        SlotType = slotType;
+        Index = index;
     }
 }
