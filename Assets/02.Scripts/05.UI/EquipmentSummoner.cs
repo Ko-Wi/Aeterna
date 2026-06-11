@@ -51,17 +51,18 @@ public class EquipmentSummoner : MonoBehaviour
     public void SummonEquipment()
     {
         EquipmentSlotType summonSlot = GetRandomSummonSlot();
+        EquipmentGrade grade = EquipmentGrade.Common;
         int EquipmentIndex = GetRandomIndexByForgeLevel();
 
-        AddOwnedEquipment(summonSlot, EquipmentIndex);
+        AddOwnedEquipment(summonSlot, grade, EquipmentIndex);
 
         //ApplySummonedEquipment(summonSlot, EquipmentIndex);
 
         Debug.Log($"뽑힌 장비 타입: {summonSlot} // {EquipmentIndex}");
     }
-    private void AddOwnedEquipment(EquipmentSlotType slotType, int index)
+    private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
     {
-        OwnedEquipment equipment = new OwnedEquipment(slotType, index);
+        OwnedEquipment equipment = new OwnedEquipment(slotType, grade, index);
         myChar.OwnedEquipments.Add(equipment);
 
         Debug.Log($"보유 장비 추가: {slotType} / Index: {index} / 총 보유 수: {myChar.OwnedEquipments.Count}");

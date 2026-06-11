@@ -80,5 +80,9 @@ MonoBehaviour:
     customIcons: []
     enabled: 1
   - builtinIcons: []
+    customIcons:
+    - Canvas Icon
+    enabled: 1
+  - builtinIcons: []
     customIcons: []
     enabled: 1

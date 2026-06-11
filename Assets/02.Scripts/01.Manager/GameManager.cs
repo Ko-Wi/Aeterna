@@ -52,3 +52,16 @@ public enum EquipmentSlotType
     Belt,
     Shield
 }
+public enum EquipmentGrade
+{
+    Common,     // 일반
+    Magic,      // 마법
+    Rare,       // 희귀
+    Heroic,     // 영웅
+    Legendary,  // 전설
+    Unique,     // 유니크
+    Mythic,     // 신화
+    Ancient,    // 고대
+    Abyssal,    // 심연
+    Genesis     // 창세
+}

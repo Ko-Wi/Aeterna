@@ -82,6 +82,7 @@ public class MyObject : MonoBehaviour
 public class OwnedEquipment
 {
     public EquipmentSlotType SlotType;
+    public EquipmentGrade grade;
     public int Index;
 
     public OwnedEquipment(EquipmentSlotType slotType, int index)

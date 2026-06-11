@@ -31,6 +31,7 @@ MonoBehaviour:
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1590654101-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-318842637-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1653625471-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-541191137-0
         values:
         - colorIndex: 0
           iconNameOrGuid: Camera Icon
@@ -68,6 +69,10 @@ MonoBehaviour:
           iconNameOrGuid: Folder Icon
           isIconRecursive: 0
           isColorRecursive: 1
+        - colorIndex: 0
+          iconNameOrGuid: cs Script Icon
+          isIconRecursive: 0
+          isColorRecursive: 0
   bookmarks:
   - _go: {fileID: 0}
     globalId:
