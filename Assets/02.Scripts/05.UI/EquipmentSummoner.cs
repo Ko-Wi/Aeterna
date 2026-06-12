@@ -5,11 +5,13 @@ using UnityEngine;
 public class EquipmentSummoner : MonoBehaviour
 {
     MyObject myChar;
+    GameManager gameManager;
     public Animator animator;
 
     private void Start()
     {
         myChar = MyObject.MyChar;
+        gameManager = GameManager.Instance;
     }
 
     public void OnClickSummonButton()
@@ -45,20 +47,23 @@ public class EquipmentSummoner : MonoBehaviour
             EquipmentSlotType.Shield
         };
 
+        
         int randomIndex = UnityEngine.Random.Range(0, summonParts.Length);
         return summonParts[randomIndex];
     }
     public void SummonEquipment()
     {
         EquipmentSlotType summonSlot = GetRandomSummonSlot();
-        EquipmentGrade grade = EquipmentGrade.Common;
-        int EquipmentIndex = GetRandomIndexByForgeLevel();
 
-        AddOwnedEquipment(summonSlot, grade, EquipmentIndex);
+        EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
+
+        int equipmentIndex = GetRandomIndexByForgeLevel();
+
+        AddOwnedEquipment(summonSlot, grade, equipmentIndex);
 
         //ApplySummonedEquipment(summonSlot, EquipmentIndex);
 
-        Debug.Log($"ªÃ»˘ ¿Â∫Ò ≈∏¿‘: {summonSlot} // {EquipmentIndex}");
+        Debug.Log($"ªÃ»˘ ¿Â∫Ò ≈∏¿‘: {summonSlot} // {equipmentIndex} // {grade}");
     }
     private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
     {

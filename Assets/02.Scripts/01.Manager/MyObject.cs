@@ -12,11 +12,11 @@ public class MyObject : MonoBehaviour
         {
             if (s_MyObject == null)
             {
-                s_MyObject = FindObjectOfType(typeof(MyObject)) as MyObject;
+                s_MyObject = FindAnyObjectByType<MyObject>();
                 if (s_MyObject == null)
                 {
                     GameObject obj = new GameObject("MyChar");
-                    s_MyObject = obj.AddComponent(typeof(MyObject)) as MyObject;
+                    s_MyObject = obj.AddComponent<MyObject>();
                 }
             }
             return s_MyObject;
@@ -57,6 +57,12 @@ public class MyObject : MonoBehaviour
 
     public List<OwnedEquipment> OwnedEquipments = new List<OwnedEquipment>();
 
+
+    //==================== ¿¢¼¿°ü·Ã =====================
+
+    public UpgradeTemplate UpgradeData;
+    public UpgradeTemplateMgr UpgradeDataMgr;
+
     private void Awake()
     {
         if (s_MyObject != null && s_MyObject != this)
@@ -65,17 +71,25 @@ public class MyObject : MonoBehaviour
             return;
         }
         DontDestroyOnLoad(gameObject);
+
+        UpgradeDataMgr = new UpgradeTemplateMgr();
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
-        
+        OnLoadDataMgr();
     }
 
     // Update is called once per frame
     private void Update()
     {
         
+    }
+
+    void OnLoadDataMgr()
+    {
+        string MultiTextResource = "01_Excel/UpgradeTable";
+        UpgradeDataMgr.OnDataLoad(MultiTextResource);
     }
 }
 [System.Serializable]
