@@ -5,7 +5,8 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     MyObject myChar;
-    private PartsManager partsManager;
+
+    [SerializeField] private PartsManager partsManager;
 
     public Animator _anim;
 
@@ -14,20 +15,6 @@ public class PlayerController : MonoBehaviour
     public int partIndex;
     public bool boolPart;
     public PartsManager PartsManager => partsManager;
-
-    [Header("랜덤 무기 뽑기 설정")]
-
-    [SerializeField] private PartsType[] randomWeaponTypes =
-    {
-        PartsType.Sword,
-        PartsType.Axe,
-        PartsType.Bow,
-        PartsType.Wand,
-        PartsType.Staff,
-        PartsType.Spear,
-        PartsType.Blunt,
-        PartsType.Crossbow
-    };
 
     [Header("공격 설정")]
     [SerializeField] private bool isAttacking;
@@ -39,8 +26,7 @@ public class PlayerController : MonoBehaviour
 
     void Awake()
     {
-        partsManager = GetComponent<PartsManager>();
-        _anim = GetComponent<Animator>();
+        _anim = transform.GetComponentInChildren<Animator>();
 
         if (attackCenter == null)
             attackCenter = transform;
@@ -54,46 +40,44 @@ public class PlayerController : MonoBehaviour
         myChar = MyObject.MyChar;
 
         if (partsManager != null)
+        {
             partsManager.Init();
-        
-        UnequipAllParts();    
+            _anim.Play("Idle");
+        }
+
+        //UnequipAllParts();    
     }
     // Update is called once per frame
     void Update()
     {
-        if (partsManager == null)
-        {
-            Debug.LogWarning("PartsManager 참조가 비어있거나 이미 삭제되었습니다.");
-            return;
-        }
 
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            ApplyEquipFromMyChar();
-        }
-        if (Input.GetKeyDown(KeyCode.V))
-        {
-            partsManager.ToggleParts(partType, boolPart);
-        }
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            var item = equipmentPresetData.GetItem(partIndex);
+        //if (Input.GetKeyDown(KeyCode.S))
+        //{
+        //    ApplyEquipFromMyChar();
+        //}
+        //if (Input.GetKeyDown(KeyCode.V))
+        //{
+        //    partsManager.ToggleParts(partType, boolPart);
+        //}
+        //if (Input.GetKeyDown(KeyCode.P))
+        //{
+        //    var item = equipmentPresetData.GetItem(partIndex);
 
-            partsManager.ApplyPresetItem(item);
+        //    partsManager.ApplyPresetItem(item);
 
-        }
+        //}
 
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            UnequipAllParts();
-        }
+        //if (Input.GetKeyDown(KeyCode.A))
+        //{
+        //    UnequipAllParts();
+        //}
 
 
-        // 테스트용: R 키를 누를 때마다 무기 1회 랜덤 뽑기
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            DrawRandomWeapon();
-        }
+        //// 테스트용: R 키를 누를 때마다 무기 1회 랜덤 뽑기
+        //if (Input.GetKeyDown(KeyCode.R))
+        //{
+        //    DrawRandomWeapon();
+        //}
 
         // 무기 장착 중이면 자동 공격 체크
         TryAutoAttack();
@@ -140,40 +124,6 @@ public class PlayerController : MonoBehaviour
 
         if (myChar.LeftItemIndex >= 0)
             EquipGroupExclusive(myChar.LeftItemType, myChar.LeftItemIndex);
-    }
-
-    /// <summary>
-    /// 무기를 1회 랜덤 뽑기하고 즉시 장착합니다.
-    /// </summary>
-    public void DrawRandomWeapon()
-    {
-        List<PartsType> availableWeaponTypes = new List<PartsType>();
-
-        for (int i = 0; i < randomWeaponTypes.Length; i++)
-        {
-            PartsType type = randomWeaponTypes[i];
-            int count = partsManager.GetPartsCount(type);
-
-            if (count > 0)
-                availableWeaponTypes.Add(type);
-        }
-
-        if (availableWeaponTypes.Count == 0)
-        {
-            Debug.LogWarning("뽑을 수 있는 무기 파츠가 없습니다.");
-            return;
-        }
-
-        PartsType selectedType = availableWeaponTypes[Random.Range(0, availableWeaponTypes.Count)];
-        int selectedCount = partsManager.GetPartsCount(selectedType);
-        int selectedIndex = Random.Range(0, selectedCount);
-
-        myChar.WeaponType = selectedType;
-        myChar.WeaponIndex = selectedIndex;
-
-        EquipGroupExclusive(selectedType, selectedIndex);
-
-        Debug.Log($"무기 뽑기 결과: {selectedType} / Index: {selectedIndex}");
     }
 
     /// <summary>

@@ -1,11 +1,36 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class UiManager : MonoBehaviour
 {
+    /********************************** ½Ì ±Û Åæ *******************************************/
+
+    private static UiManager _instance;
+    public static UiManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindObjectOfType<UiManager>();
+
+                if (_instance == null)
+                {
+                    Debug.LogError("UiManager instance is null. Please ensure an instance of UIManager is present in the scene.");
+                }
+            }
+            return _instance;
+        }
+    }
+    /*************************************************************************************/
     MyObject myChar;
 
+    //»ÌÈù Àåºñ º¸¿©ÁÖ´Â Panel
+    [SerializeField] private GameObject SummonEquipment;
+    //Àåºñ »Ì´Â UIºÎºÐ
     [SerializeField] private Transform SummonPanel;
     [SerializeField] private GameObject SummonBtn;
     [SerializeField] private GameObject EquipBtn;
@@ -38,20 +63,39 @@ public class UiManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        SummonEquipmentSet();
     }
 
-    private void SummonUiSet()
+    public void SummonUiSet()
     {
-        if(myChar.OwnedEquipments.Count > 0)
+        int equipmentCount = myChar.OwnedEquipments.Count;
+
+        bool hasEquipment = equipmentCount > 0;
+
+        SummonBtn.GetComponent<Image>().enabled = !hasEquipment;
+        SummonBtn.GetComponent<Button>().interactable = !hasEquipment;
+
+        EquipBtn.SetActive(hasEquipment);
+
+        int maxCount = EquipBtn.transform.childCount;
+
+        for (int i = 0; i < maxCount; i++)
         {
-            SummonBtn.SetActive(false);
-            EquipBtn.SetActive(true);
+            bool active = i < equipmentCount;
+            EquipBtn.transform.GetChild(i).gameObject.SetActive(active);
         }
-        else
+
+        if(true)
         {
-            SummonBtn.SetActive(true);
-            EquipBtn.SetActive(false);
+            SummonEquipment.SetActive(true);
         }
     }
+
+    private void SummonEquipmentSet()
+    {
+        if (!SummonEquipment.activeSelf) return;
+
+
+    }
+
 }

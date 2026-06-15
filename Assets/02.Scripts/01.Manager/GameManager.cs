@@ -42,7 +42,10 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if(Input.GetKeyDown(KeyCode.R))
+        {
+            RefreshEquipmentGradeProbabilities();
+        }
     }
     /// <summary>
     /// 현재 myChar.ForgeLevel에 맞는 장비 등급 확률을 리스트에 갱신합니다.
@@ -53,7 +56,7 @@ public class GameManager : MonoBehaviour
         if (myChar == null)
             myChar = MyObject.MyChar;
 
-        UpgradeTemplate template = myChar.UpgradeDataMgr.GetTemplate(myChar.ForgeLevel);
+        var template = myChar.UpgradeDataMgr.GetTemplate(myChar.ForgeLevel);
         if (template == null)
         {
             Debug.Log(template.Unique);
@@ -79,26 +82,7 @@ public class GameManager : MonoBehaviour
     /// </summary>
     public EquipmentGrade GetRandomEquipmentGrade()
     {
-        if (EquipmentGradeProbabilities == null || EquipmentGradeProbabilities.Count == 0)
-        {
-            RefreshEquipmentGradeProbabilities();
-            Debug.Log(111);
-        }
-
-        float totalRate = 0f;
-
-        for (int i = 0; i < EquipmentGradeProbabilities.Count; i++)
-        {
-            totalRate += EquipmentGradeProbabilities[i].Probability;
-        }
-
-        if (totalRate <= 0f)
-        {
-            Debug.LogWarning("장비 등급 확률 총합이 0 이하입니다. 기본 등급 Common 반환");
-            return EquipmentGrade.Common;
-        }
-
-        float randomValue = UnityEngine.Random.Range(0f, totalRate);
+        float randomValue = UnityEngine.Random.Range(0f, 100f);
         float cumulative = 0f;
 
         for (int i = 0; i < EquipmentGradeProbabilities.Count; i++)
@@ -112,6 +96,46 @@ public class GameManager : MonoBehaviour
         }
 
         return EquipmentGrade.Common;
+    }
+
+    public int[] GetIndexCountsBySlot(EquipmentSlotType slotType)
+    {
+        switch (slotType)
+        {
+            case EquipmentSlotType.Wand:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Staff:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Chest:
+                return new int[] { 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 };
+
+            case EquipmentSlotType.Helmet:
+                return new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
+
+            case EquipmentSlotType.Pants:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Amulet:
+                return new int[] { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
+
+            case EquipmentSlotType.Ring:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Boots:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Belt:
+                return new int[] { 3, 3, 3, 3, 2, 3, 3, 3, 3, 3 };
+
+            case EquipmentSlotType.Shield:
+                return new int[] { 1, 1, 1, 2, 2, 2, 2, 2, 2, 2 };
+
+            default:
+                Debug.LogWarning($"정의되지 않은 장비 슬롯입니다: {slotType}");
+                return new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        }
     }
 }
 [Serializable]
@@ -132,12 +156,12 @@ public enum EquipmentSlotType
     Wand,
     Staff,
 
-    Helmet,
     Chest,
-    Glove,
-    Boots,
+    Helmet,
+    Pants,
+    Amulet,
     Ring,
-    Earring,
+    Boots,
     Belt,
     Shield
 }

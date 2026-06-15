@@ -6,12 +6,14 @@ public class EquipmentSummoner : MonoBehaviour
 {
     MyObject myChar;
     GameManager gameManager;
+    UiManager uiManager;
     public Animator animator;
 
     private void Start()
     {
         myChar = MyObject.MyChar;
         gameManager = GameManager.Instance;
+        uiManager = UiManager.Instance;
     }
 
     public void OnClickSummonButton()
@@ -39,10 +41,10 @@ public class EquipmentSummoner : MonoBehaviour
             EquipmentSlotType.Staff,
             EquipmentSlotType.Helmet,
             EquipmentSlotType.Chest,
-            EquipmentSlotType.Glove,
+            EquipmentSlotType.Pants,
             EquipmentSlotType.Boots,
             EquipmentSlotType.Ring,
-            EquipmentSlotType.Earring,
+            EquipmentSlotType.Amulet,
             EquipmentSlotType.Belt,
             EquipmentSlotType.Shield
         };
@@ -57,13 +59,17 @@ public class EquipmentSummoner : MonoBehaviour
 
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
 
-        int equipmentIndex = GetRandomIndexByForgeLevel();
+        int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);
 
         AddOwnedEquipment(summonSlot, grade, equipmentIndex);
 
         //ApplySummonedEquipment(summonSlot, EquipmentIndex);
 
         Debug.Log($"ªÃ»˘ ¿Â∫Ò ≈∏¿‘: {summonSlot} // {equipmentIndex} // {grade}");
+
+        uiManager.SummonUiSet();
+
+
     }
     private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
     {
@@ -97,6 +103,22 @@ public class EquipmentSummoner : MonoBehaviour
 
         return UnityEngine.Random.Range(minIndex, maxIndex + 1);
     }
+    private int GetRandomIndexByGrade(EquipmentSlotType slotType, EquipmentGrade grade)
+    {
+        int[] counts = gameManager.GetIndexCountsBySlot(slotType);
+        int gradeIndex = (int)grade;
+
+        int minIndex = 0;
+
+        for (int i = 0; i < gradeIndex; i++)
+        {
+            minIndex += counts[i];
+        }
+
+        int maxIndex = minIndex + counts[gradeIndex];
+
+        return UnityEngine.Random.Range(minIndex, maxIndex);
+    }
     private void ApplySummonedEquipment(EquipmentSlotType slotType, int index)
     {
         switch (slotType)
@@ -119,7 +141,7 @@ public class EquipmentSummoner : MonoBehaviour
                 myChar.ChestIndex = index;
                 break;
 
-            case EquipmentSlotType.Glove:
+            case EquipmentSlotType.Pants:
                 myChar.GloveIndex = index;
                 break;
 
@@ -131,7 +153,7 @@ public class EquipmentSummoner : MonoBehaviour
                 myChar.RingIndex = index;
                 break;
 
-            case EquipmentSlotType.Earring:
+            case EquipmentSlotType.Amulet:
                 myChar.EarringIndex = index;
                 break;
 

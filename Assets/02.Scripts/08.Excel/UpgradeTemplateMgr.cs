@@ -48,6 +48,7 @@ public class UpgradeTemplateMgr : MUIBase<UpgradeTemplate>
         }
 
         string Data = ReadFile(_textResource);
+
         if (Data != "")
         {
             string[] list = Data.Split(new string[] { "\n" }, System.StringSplitOptions.RemoveEmptyEntries);

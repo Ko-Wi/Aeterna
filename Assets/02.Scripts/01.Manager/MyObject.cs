@@ -59,8 +59,6 @@ public class MyObject : MonoBehaviour
 
 
     //==================== ¿¢¼¿°ü·Ã =====================
-
-    public UpgradeTemplate UpgradeData;
     public UpgradeTemplateMgr UpgradeDataMgr;
 
     private void Awake()
@@ -73,11 +71,12 @@ public class MyObject : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         UpgradeDataMgr = new UpgradeTemplateMgr();
+
+        OnLoadDataMgr();
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
     {
-        OnLoadDataMgr();
     }
 
     // Update is called once per frame
@@ -88,8 +87,8 @@ public class MyObject : MonoBehaviour
 
     void OnLoadDataMgr()
     {
-        string MultiTextResource = "01_Excel/UpgradeTable";
-        UpgradeDataMgr.OnDataLoad(MultiTextResource);
+        string UpgradeResource = "01_Excel/UpgradeTable";
+        UpgradeDataMgr.OnDataLoad(UpgradeResource);
     }
 }
 [System.Serializable]
