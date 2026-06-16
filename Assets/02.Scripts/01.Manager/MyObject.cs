@@ -91,17 +91,17 @@ public class MyObject : MonoBehaviour
         UpgradeDataMgr.OnDataLoad(UpgradeResource);
     }
 }
-[System.Serializable]
-public class OwnedEquipment
-{
-    public EquipmentSlotType SlotType;
-    public EquipmentGrade Grade;
-    public int Index;
+//[System.Serializable]
+//public class OwnedEquipment
+//{
+//    public EquipmentSlotType SlotType;
+//    public EquipmentGrade Grade;
+//    public int Index;
 
-    public OwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
-    {
-        SlotType = slotType;
-        Grade = grade;
-        Index = index;
-    }
-}
+//    public OwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
+//    {
+//        SlotType = slotType;
+//        Grade = grade;
+//        Index = index;
+//    }
+//}

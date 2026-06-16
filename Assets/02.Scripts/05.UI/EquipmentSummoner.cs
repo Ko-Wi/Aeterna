@@ -73,8 +73,8 @@ public class EquipmentSummoner : MonoBehaviour
     }
     private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
     {
-        OwnedEquipment equipment = new OwnedEquipment(slotType, grade, index);
-        myChar.OwnedEquipments.Add(equipment);
+        //OwnedEquipment equipment = new OwnedEquipment(slotType, grade, index);
+        //myChar.OwnedEquipments.Add(equipment);
 
         Debug.Log($"보유 장비 추가: {slotType} / Index: {index} / 총 보유 수: {myChar.OwnedEquipments.Count}");
     }
