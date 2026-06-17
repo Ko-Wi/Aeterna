@@ -138,6 +138,11 @@ public class ForgeManager : MonoBehaviour
                 return EquipmentStatusType.Attack;
         }
     }
+    public void DebugTest()
+    {
+        Debug.Log("눌림");
+        //에어브릿지
+    }
 
     private int GetMainStatusValue(EquipmentGrade grade)
     {
@@ -197,13 +202,15 @@ public class ForgeManager : MonoBehaviour
     {
         EquipmentOptionType[] optionTypes =
         {
-            EquipmentOptionType.Attack,
-            EquipmentOptionType.Hp,
-            EquipmentOptionType.Defense,
             EquipmentOptionType.CriticalRate,
             EquipmentOptionType.CriticalDamage,
-            EquipmentOptionType.GoldGain,
-            EquipmentOptionType.ExpGain
+            EquipmentOptionType.BlockRate,
+            EquipmentOptionType.LifeSteal,
+            EquipmentOptionType.DoubleAttack,
+            EquipmentOptionType.Damage,
+            EquipmentOptionType.ASPD,
+            EquipmentOptionType.SkillCoolTime,
+            EquipmentOptionType.MultiShot
         };
 
         int randomIndex = UnityEngine.Random.Range(0, optionTypes.Length);
@@ -221,11 +228,6 @@ public class ForgeManager : MonoBehaviour
 
             case EquipmentOptionType.CriticalDamage:
                 return UnityEngine.Random.Range(5 + gradeIndex * 2, 10 + gradeIndex * 3);
-
-            case EquipmentOptionType.GoldGain:
-            case EquipmentOptionType.ExpGain:
-                return UnityEngine.Random.Range(1 + gradeIndex, 5 + gradeIndex * 2);
-
             default:
                 return UnityEngine.Random.Range(5 + gradeIndex * 5, 10 + gradeIndex * 10);
         }
@@ -241,13 +243,15 @@ public enum EquipmentStatusType
 
 public enum EquipmentOptionType
 {
-    Attack,
-    Hp,
-    Defense,
     CriticalRate,
     CriticalDamage,
-    GoldGain,
-    ExpGain
+    BlockRate,
+    LifeSteal,
+    DoubleAttack,
+    Damage,
+    ASPD,
+    SkillCoolTime,
+    MultiShot
 }
 
 

@@ -64,6 +64,22 @@ public class UiManager : MonoBehaviour
     void Update()
     {
         SummonEquipmentSet();
+
+        UIBasicSet();
+    }
+    public void UIBasicSet()
+    {
+        bool isEquipBtn = !SummonEquipment.activeSelf && myChar.OwnedEquipments.Count > 0;
+
+        EquipBtn.SetActive(isEquipBtn);
+
+        if (!EquipBtn.activeSelf) return;
+
+        for (int i = 0; i < myChar.OwnedEquipments.Count; i++)
+        {
+            var EquipSlot = EquipBtn.transform.GetChild(i);
+
+        }
     }
 
     public void SummonUiSet()

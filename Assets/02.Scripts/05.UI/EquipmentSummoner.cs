@@ -7,6 +7,7 @@ public class EquipmentSummoner : MonoBehaviour
     MyObject myChar;
     GameManager gameManager;
     UiManager uiManager;
+    ForgeManager forgeManager;
     public Animator animator;
 
     private void Start()
@@ -14,6 +15,7 @@ public class EquipmentSummoner : MonoBehaviour
         myChar = MyObject.MyChar;
         gameManager = GameManager.Instance;
         uiManager = UiManager.Instance;
+        forgeManager = ForgeManager.Instance;
     }
 
     public void OnClickSummonButton()
@@ -71,12 +73,11 @@ public class EquipmentSummoner : MonoBehaviour
 
 
     }
+
+    //장비 단조
     private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
     {
-        //OwnedEquipment equipment = new OwnedEquipment(slotType, grade, index);
-        //myChar.OwnedEquipments.Add(equipment);
-
-        Debug.Log($"보유 장비 추가: {slotType} / Index: {index} / 총 보유 수: {myChar.OwnedEquipments.Count}");
+        forgeManager.ForgeEquipment();
     }
 
     /// <summary>
