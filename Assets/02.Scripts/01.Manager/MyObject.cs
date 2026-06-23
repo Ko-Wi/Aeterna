@@ -60,6 +60,7 @@ public class MyObject : MonoBehaviour
 
     //==================== ¿¢¼¿°ü·Ã =====================
     public UpgradeTemplateMgr UpgradeDataMgr;
+    public EquipmentLvTierTemplateMgr LvTierDataMgr;
 
     private void Awake()
     {
@@ -71,6 +72,7 @@ public class MyObject : MonoBehaviour
         DontDestroyOnLoad(gameObject);
 
         UpgradeDataMgr = new UpgradeTemplateMgr();
+        LvTierDataMgr = new EquipmentLvTierTemplateMgr();
 
         OnLoadDataMgr();
     }
@@ -89,6 +91,8 @@ public class MyObject : MonoBehaviour
     {
         string UpgradeResource = "01_Excel/UpgradeTable";
         UpgradeDataMgr.OnDataLoad(UpgradeResource);
+        string LvTierResource = "01_Excel/EquipmentLvTier";
+        LvTierDataMgr.OnDataLoad(LvTierResource);
     }
 }
 //[System.Serializable]

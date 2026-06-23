@@ -38,6 +38,7 @@ public class ForgeManager : MonoBehaviour
         EquipmentSlotType slotType = GetRandomSummonSlot();
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
         int equipmentIndex = GetRandomIndexByGrade(slotType, grade);
+        int equipmentLevel = 1;
 
         EquipmentStatusType statusType = GetMainStatusType(slotType);
         int statusValue = GetMainStatusValue(grade);
@@ -48,6 +49,7 @@ public class ForgeManager : MonoBehaviour
             slotType,
             grade,
             equipmentIndex,
+            equipmentLevel,
             statusType,
             statusValue,
             options
