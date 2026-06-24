@@ -71,7 +71,6 @@ public class EquipmentSummoner : MonoBehaviour
 
         uiManager.SummonUiSet();
 
-
     }
 
     //장비 단조
@@ -143,7 +142,7 @@ public class EquipmentSummoner : MonoBehaviour
                 break;
 
             case EquipmentSlotType.Pants:
-                myChar.GloveIndex = index;
+                myChar.PantsIndex = index;
                 break;
 
             case EquipmentSlotType.Boots:
@@ -155,7 +154,7 @@ public class EquipmentSummoner : MonoBehaviour
                 break;
 
             case EquipmentSlotType.Amulet:
-                myChar.EarringIndex = index;
+                myChar.AmuletIndex = index;
                 break;
 
             case EquipmentSlotType.Belt:

@@ -38,7 +38,7 @@ public class ForgeManager : MonoBehaviour
         EquipmentSlotType slotType = GetRandomSummonSlot();
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
         int equipmentIndex = GetRandomIndexByGrade(slotType, grade);
-        int equipmentLevel = 1;
+        int equipmentLevel = GetRandomEquipmentLevel(grade);
 
         EquipmentStatusType statusType = GetMainStatusType(slotType);
         int statusValue = GetMainStatusValue(grade);
@@ -99,6 +99,7 @@ public class ForgeManager : MonoBehaviour
         return weaponTypes[randomIndex];
     }
 
+    //단조 뽑기의 등급 설정해주는부분
     private int GetRandomIndexByGrade(EquipmentSlotType slotType, EquipmentGrade grade)
     {
         int[] counts = gameManager.GetIndexCountsBySlot(slotType);
@@ -114,6 +115,69 @@ public class ForgeManager : MonoBehaviour
         int maxIndex = minIndex + counts[gradeIndex];
 
         return UnityEngine.Random.Range(minIndex, maxIndex);
+    }
+
+    //단조 뽑기 Lv 설정해주는 부분
+    private int GetRandomEquipmentLevel(EquipmentGrade grade)
+    {
+        var template = myChar.LvTierDataMgr.GetTemplate(myChar.ForgeLevel);
+
+        int tier = 0;
+
+        switch (grade)
+        {
+            case EquipmentGrade.Common:
+                tier = template.Common;
+                break;
+
+            case EquipmentGrade.Magic:
+                tier = template.Magic;
+                break;
+
+            case EquipmentGrade.Rare:
+                tier = template.Rare;
+                break;
+
+            case EquipmentGrade.Heroic:
+                tier = template.Heroic;
+                break;
+
+            case EquipmentGrade.Legendary:
+                tier = template.Legendary;
+                break;
+
+            case EquipmentGrade.Unique:
+                tier = template.Unique;
+                break;
+
+            case EquipmentGrade.Mythic:
+                tier = template.Mythic;
+                break;
+
+            case EquipmentGrade.Ancient:
+                tier = template.Ancient;
+                break;
+
+            case EquipmentGrade.Abyssal:
+                tier = template.Abyssal;
+                break;
+
+            case EquipmentGrade.Genesis:
+                tier = template.Genesis;
+                break;
+        }
+
+        // Tier는 1~6만 사용
+        tier = Mathf.Clamp(tier, 1, 6);
+
+        int minLv = Mathf.Max(1, (tier - 2) * 20);
+        int maxLv = tier * 20;
+
+        Debug.Log($"min : {minLv} // max : {maxLv} /// tier : {tier}" );
+        // int Random.Range는 max가 미포함이라 +1
+        int Lv = UnityEngine.Random.Range(minLv, maxLv + 1);
+        Debug.Log($"LV : {Lv}");
+        return Lv;
     }
 
     private EquipmentStatusType GetMainStatusType(EquipmentSlotType slotType)

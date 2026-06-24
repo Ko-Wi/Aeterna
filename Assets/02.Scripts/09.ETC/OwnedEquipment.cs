@@ -26,6 +26,7 @@ public class OwnedEquipment
             SlotType = slotType;
             Grade = grade;
             EquipmentIndex = equipmentIndex;
+            EquipmentLevel = equipmentLevel;
             MainStatusType = mainStatusType;
             MainStatusValue = mainStatusValue;
 

@@ -41,10 +41,10 @@ public class MyObject : MonoBehaviour
     public PartsType LeftItemType;
     public int LeftItemIndex = -1;
 
-    public int GloveIndex = -1;
+    public int PantsIndex = -1;
     public int BootsIndex = -1;
     public int RingIndex = -1;
-    public int EarringIndex = -1;
+    public int AmuletIndex = -1;
     public int BeltIndex = -1;
 
     [Header("ÄÚ½ºÆ¬ ÀÎµ¦½º")]
