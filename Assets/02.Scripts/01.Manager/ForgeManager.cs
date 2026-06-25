@@ -33,7 +33,7 @@ public class ForgeManager : MonoBehaviour
         gameManager = GameManager.Instance;
     }
 
-    public OwnedEquipment ForgeEquipment()
+    public Equipment ForgeEquipment()
     {
         EquipmentSlotType slotType = GetRandomSummonSlot();
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
@@ -45,7 +45,7 @@ public class ForgeManager : MonoBehaviour
 
         List<EquipmentOption> options = CreateRandomOptions(slotType, grade);
 
-        OwnedEquipment equipment = new OwnedEquipment(
+        Equipment equipment = new Equipment(
             slotType,
             grade,
             equipmentIndex,
@@ -55,7 +55,7 @@ public class ForgeManager : MonoBehaviour
             options
         );
 
-        myChar.OwnedEquipments.Add(equipment);
+        myChar.ForgeEquipments.Add(equipment);
 
         Debug.Log($"단조 완료: {slotType} / {grade} / Index: {equipmentIndex} / {statusType}: {statusValue} / Option Count: {options.Count}");
 
@@ -168,15 +168,16 @@ public class ForgeManager : MonoBehaviour
         }
 
         // Tier는 1~6만 사용
-        tier = Mathf.Clamp(tier, 1, 6);
+        tier = Mathf.Clamp(tier, 1, 12);
 
-        int minLv = Mathf.Max(1, (tier - 2) * 20);
-        int maxLv = tier * 20;
+        //창세 단계가아니라면 10씩 랜덤값으로 계산 창세는 20씩
+        int levelUnit = grade == EquipmentGrade.Genesis ? 20 : 10;
 
-        Debug.Log($"min : {minLv} // max : {maxLv} /// tier : {tier}" );
+        int minLv = Mathf.Max(1, (tier - 4) * levelUnit);
+        int maxLv = tier * levelUnit;
+
         // int Random.Range는 max가 미포함이라 +1
         int Lv = UnityEngine.Random.Range(minLv, maxLv + 1);
-        Debug.Log($"LV : {Lv}");
         return Lv;
     }
 

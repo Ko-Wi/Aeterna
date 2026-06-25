@@ -28,24 +28,36 @@ public class MyObject : MonoBehaviour
     [Header("장비 인덱스")]
     public PartsCategory[] categories;
 
-    public int EyeIndex = -1;
-    public int HairIndex = -1;
-    public int BeardIndex = -1;
+    public int EyeIndex = -1;               //눈
+    public int HairIndex = -1;              //헤어
+    public int BeardIndex = -1;             //수염
 
-    public int HelmetIndex = -1;
-    public int ChestIndex = -1;
+    public EquipmentSlotType SelectEquipmentType;
+    public Equipment EquippedHelmet;   //투구
+    public Equipment EquippedChest;    //갑옷
+    public Equipment EquippedWeapon;   //무기
+    public Equipment EquippedShield;   //방패[보조무기]
+
+    public Equipment EquippedPants;    //하의
+    public Equipment EquippedBoots;    //신발
+    public Equipment EquippedRing;     //반지
+    public Equipment EquippedAmulet;   //목걸이
+    public Equipment EquippedBelt;     //벨트
+
+    public int HelmetIndex = -1;            //투구
+    public int ChestIndex = -1;             //갑옷
 
     [Header("장착 중인 파츠 인덱스 (-1 = 미착용)")]
-    public PartsType WeaponType;
-    public int WeaponIndex = -1;
+    public PartsType WeaponType;            
+    public int WeaponIndex = -1;            //무기
     public PartsType LeftItemType;
-    public int LeftItemIndex = -1;
+    public int LeftItemIndex = -1;          //방패(보조무기)
 
-    public int PantsIndex = -1;
-    public int BootsIndex = -1;
-    public int RingIndex = -1;
-    public int AmuletIndex = -1;
-    public int BeltIndex = -1;
+    public int PantsIndex = -1;             //바지
+    public int BootsIndex = -1;             //신발
+    public int RingIndex = -1;              //반지
+    public int AmuletIndex = -1;            //목걸이
+    public int BeltIndex = -1;              //벨트
 
     [Header("코스튬 인덱스")]
     public PartsType CostumeWeaponType;
@@ -55,7 +67,7 @@ public class MyObject : MonoBehaviour
     public int CostumeChestIndex = -1;
     public int CostumeHelmetIndex = -1;
 
-    public List<OwnedEquipment> OwnedEquipments = new List<OwnedEquipment>();
+    public List<Equipment> ForgeEquipments = new List<Equipment>();
 
 
     //==================== 엑셀관련 =====================

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 
 [Serializable]
-public class OwnedEquipment
+public class Equipment
 {
     public EquipmentSlotType SlotType;          // 장비종류
     public EquipmentGrade Grade;                // 등급
@@ -14,7 +14,7 @@ public class OwnedEquipment
 
     public List<EquipmentOption> Options = new List<EquipmentOption>();
 
-    public OwnedEquipment(
+    public Equipment(
         EquipmentSlotType slotType,
         EquipmentGrade grade,
         int equipmentIndex,
