@@ -153,6 +153,8 @@ public class EquipmentGradeProbability
 
 public enum EquipmentSlotType
 {
+    None,
+
     Wand,
     Staff,
 

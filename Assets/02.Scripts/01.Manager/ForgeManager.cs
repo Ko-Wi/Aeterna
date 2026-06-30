@@ -21,6 +21,7 @@ public class ForgeManager : MonoBehaviour
 
     private MyObject myChar;
     private GameManager gameManager;
+    private UiManager uiManager;
 
     private void Awake()
     {
@@ -31,6 +32,111 @@ public class ForgeManager : MonoBehaviour
     {
         myChar = MyObject.MyChar;
         gameManager = GameManager.Instance;
+        uiManager = UiManager.Instance;
+    }
+    //현재 보여지는 장비 가져오기
+    private Equipment GetCurrentForgeEquipment()
+    {
+        if (myChar.ForgeEquipments == null || myChar.ForgeEquipments.Count == 0)
+            return null;
+
+        return myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
+    }
+
+    //장비 장착 클릭 이벤트
+    public void OnClickEquipForgeEquipment()
+    {
+        Equipment newEquipment = GetCurrentForgeEquipment();
+
+        if (newEquipment == null)
+            return;
+
+        Equipment oldEquipment = EquipAndGetOldEquipment(newEquipment);
+
+        int currentIndex = myChar.ForgeEquipments.Count - 1;
+
+        if (oldEquipment != null && oldEquipment.IsValid())
+        {
+            // 기존 장착 장비가 있으면 현재 단조 결과 위치에 기존 장비를 넣음
+            myChar.ForgeEquipments[currentIndex] = oldEquipment;
+        }
+        else
+        {
+            // 기존 장착 장비가 없으면 새 장비만 장착하고 결과 목록에서 제거
+            myChar.ForgeEquipments.RemoveAt(currentIndex);
+        }
+
+        ShowNextForgeEquipment();
+    }
+
+    //장비 장착 눌렀을때 장착처리해주기 [장비장착 or 장비교환]
+    private Equipment EquipAndGetOldEquipment(Equipment newEquipment)
+    {
+        Equipment oldEquipment = null;
+
+        switch (newEquipment.SlotType)
+        {
+            case EquipmentSlotType.Wand:
+            case EquipmentSlotType.Staff:
+                oldEquipment = myChar.EquippedWeapon;
+                myChar.EquippedWeapon = newEquipment;
+                break;
+
+            case EquipmentSlotType.Shield:
+                oldEquipment = myChar.EquippedShield;
+                myChar.EquippedShield = newEquipment;
+                break;
+
+            case EquipmentSlotType.Helmet:
+                oldEquipment = myChar.EquippedHelmet;
+                myChar.EquippedHelmet = newEquipment;
+                break;
+
+            case EquipmentSlotType.Chest:
+                oldEquipment = myChar.EquippedChest;
+                myChar.EquippedChest = newEquipment;
+                break;
+
+            case EquipmentSlotType.Pants:
+                oldEquipment = myChar.EquippedPants;
+                myChar.EquippedPants = newEquipment;
+                break;
+
+            case EquipmentSlotType.Boots:
+                oldEquipment = myChar.EquippedBoots;
+                myChar.EquippedBoots = newEquipment;
+                break;
+
+            case EquipmentSlotType.Ring:
+                oldEquipment = myChar.EquippedRing;
+                myChar.EquippedRing = newEquipment;
+                break;
+
+            case EquipmentSlotType.Amulet:
+                oldEquipment = myChar.EquippedAmulet;
+                myChar.EquippedAmulet = newEquipment;
+                break;
+
+            case EquipmentSlotType.Belt:
+                oldEquipment = myChar.EquippedBelt;
+                myChar.EquippedBelt = newEquipment;
+                break;
+        }
+
+        return oldEquipment;
+    }
+
+    private void ShowNextForgeEquipment()
+    {
+        Equipment nextEquipment = GetCurrentForgeEquipment();
+
+        if (nextEquipment == null)
+        {
+            uiManager.SummonEquipment.SetActive(false);
+            return;
+        }
+
+        uiManager.SummonUiSet();
     }
 
     public Equipment ForgeEquipment()
@@ -205,10 +311,10 @@ public class ForgeManager : MonoBehaviour
                 return EquipmentStatusType.Attack;
         }
     }
-    public void DebugTest()
+    //뽑은 장비 버튼 눌렸을때 실행해주는 함수[버튼에 이벤트등록]
+    public void EquipmentUISet()
     {
-        Debug.Log("눌림");
-        //에어브릿지
+        uiManager.SummonUiSet();
     }
 
     private int GetMainStatusValue(EquipmentGrade grade)

@@ -59,6 +59,7 @@ public class EquipmentSummoner : MonoBehaviour
     {
         EquipmentSlotType summonSlot = GetRandomSummonSlot();
 
+        //µî±Þ ·£´ýÀ¸·Î »Ì±â
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
 
         int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);

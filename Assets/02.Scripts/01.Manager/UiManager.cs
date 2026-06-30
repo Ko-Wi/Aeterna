@@ -30,7 +30,7 @@ public class UiManager : MonoBehaviour
     MyObject myChar;
 
     //뽑힌 장비 보여주는 Panel
-    [SerializeField] private GameObject SummonEquipment;
+    public GameObject SummonEquipment;
     //장비 뽑는 UI부분
     [SerializeField] private Transform SummonPanel;
     [SerializeField] private GameObject SummonBtn;
@@ -82,18 +82,31 @@ public class UiManager : MonoBehaviour
 
         for (int i = 0; i < myChar.ForgeEquipments.Count; i++)
         {
+            var summonEquipment = myChar.ForgeEquipments[i];
+            
             var EquipSlot = EquipBtn.transform.GetChild(i);
+            var NomalArea = EquipSlot.GetChild(0);
+            var Icon = EquipSlot.Find("Icon").GetComponent<Image>();
+            var lv_Text = EquipSlot.Find("Text_Level").GetComponent<TMP_Text>();
+
+            Icon.sprite = EquipmentIconSet(summonEquipment);
+            lv_Text.text = $"LV.{summonEquipment.EquipmentLevel}";
+
+            for (int j = 0; j < NomalArea.childCount; j++)
+            {
+                NomalArea.GetChild(j).gameObject.SetActive(false);
+            }
+            int grade = (int)summonEquipment.Grade;
+            NomalArea.GetChild(grade).gameObject.SetActive(true);
         }
     }
 
+    //장비 뽑기 버튼클릭했을때 Ui띄워주는 부분
     public void SummonUiSet()
     {
         int equipmentCount = myChar.ForgeEquipments.Count;
 
         bool hasEquipment = equipmentCount > 0;
-
-        //SummonBtn.GetComponent<Image>().enabled = !hasEquipment;
-        //SummonBtn.GetComponent<Button>().interactable = !hasEquipment;
 
         EquipBtn.SetActive(hasEquipment);
 
@@ -105,71 +118,162 @@ public class UiManager : MonoBehaviour
             EquipBtn.transform.GetChild(i).gameObject.SetActive(active);
         }
 
-        //이조건에는 연속뽑기가아니라 뽑힌 장비를 보여줄때 실행되게 코드가 작성되야한다.
-        if(true)
+        if (!hasEquipment)
         {
-            SummonEquipment.SetActive(true);
-            SummonEquipmentSet();
+            SummonEquipment.SetActive(false);
+            return;
         }
-        UnEquippedUiSet(myChar.ForgeEquipments[equipmentCount - 1]);
+
+        SummonEquipment.SetActive(true);
+
+        Equipment selectEquipment = myChar.ForgeEquipments[equipmentCount - 1];
+
+        UnEquippedUiSet(selectEquipment);
+        SummonEquipmentSet();
     }
 
     //선택된장비 정보를 UI에 그려주는 부분
     public void SummonEquipmentSet()
     {
-        //if (!SummonEquipment.activeSelf) return;
+        // 단조 결과 장비가 없으면 실행 안 함
+        if (myChar.ForgeEquipments == null || myChar.ForgeEquipments.Count <= 0)
+            return;
 
+        // 현재 유저에게 보여줄 장비 = 마지막으로 뽑힌 장비
         var SelectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
 
-        bool UsedEquipment = false;
-        switch (SelectEquipment.SlotType)
+        // 현재 뽑힌 장비와 같은 슬롯에 장착 중인 장비 가져오기
+        Equipment equippedEquipment = GetEquippedEquipmentBySlot(SelectEquipment.SlotType);
+
+        // 장착 중인 장비가 유효한 장비인지 체크
+        bool UsedEquipment = IsEquipmentValid(equippedEquipment);
+
+        // 착용 중인 장비 팝업
+        var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
+
+        // 장착 중인 장비가 있으면 켜고, 없으면 끔
+        popupEquipped.gameObject.SetActive(UsedEquipment);
+
+        // 장착 중인 장비가 있으면 Popup_Equipped UI에 데이터 표시
+        if (UsedEquipment)
+        {
+            EquippedUiSet(equippedEquipment);
+        }
+    }
+
+    // 현재 뽑힌 장비 SlotType 기준으로 같은 부위의 착용 장비 가져오기
+    private Equipment GetEquippedEquipmentBySlot(EquipmentSlotType slotType)
+    {
+        switch (slotType)
         {
             case EquipmentSlotType.Wand:
             case EquipmentSlotType.Staff:
-                if (myChar.EquippedWeapon != null)
-                    UsedEquipment = true;
-                    break;
+                return myChar.EquippedWeapon;
+
             case EquipmentSlotType.Chest:
-                if (myChar.EquippedChest != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedChest;
+
             case EquipmentSlotType.Helmet:
-                if (myChar.EquippedHelmet != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedHelmet;
+
             case EquipmentSlotType.Pants:
-                if (myChar.EquippedPants != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedPants;
+
             case EquipmentSlotType.Amulet:
-                if (myChar.EquippedAmulet != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedAmulet;
+
             case EquipmentSlotType.Ring:
-                if (myChar.EquippedRing != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedRing;
+
             case EquipmentSlotType.Boots:
-                if (myChar.EquippedBoots != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedBoots;
+
             case EquipmentSlotType.Belt:
-                if (myChar.EquippedBelt != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedBelt;
+
             case EquipmentSlotType.Shield:
-                if (myChar.EquippedShield != null)
-                    UsedEquipment = true;
-                break;
+                return myChar.EquippedShield;
+
             default:
-                break;
+                return null;
         }
-        var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
-        popupEquipped.gameObject.SetActive(UsedEquipment);
     }
 
+    // 장착 장비가 실제 유효한 장비인지 체크
+    private bool IsEquipmentValid(Equipment equipment)
+    {
+        return equipment != null && equipment.IsValid();
+    }
+
+    // 착용 중인 장비 UI창에 보여주는 부분
+    private void EquippedUiSet(Equipment equipment)
+    {
+        var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
+
+        var gradeTitle = popupEquipped.Find("Grade_Title");
+        var title_Text = gradeTitle.GetComponentInChildren<TMP_Text>();
+
+        var icon = popupEquipped.Find("Icon");
+        var itemName_Text = popupEquipped.Find("Text_ItemName").GetComponent<TMP_Text>();
+
+        var group_Buff = popupEquipped.Find("Group_Buff");
+
+        var gearStats_Text = popupEquipped.Find("Text_GearStats").GetComponent<TMP_Text>();
+
+        TitleGradeColorSet(gradeTitle, equipment.Grade);
+        IconUISet(icon, equipment, EquipmentIconSet(equipment));
+
+        title_Text.text = equipment.Grade.ToString();
+        itemName_Text.text = "장착 중인 아이템";
+        gearStats_Text.text = "장비 능력치";
+
+        EquipmentOption(group_Buff, equipment);
+    }
+    //public void SummonEquipmentSet()
+    //{
+    //    //if (!SummonEquipment.activeSelf) return;
+
+    //    var SelectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
+
+    //    bool UsedEquipment = false;
+
+    //    switch (SelectEquipment.SlotType)
+    //    {
+    //        case EquipmentSlotType.Wand:
+    //        case EquipmentSlotType.Staff:
+    //            UsedEquipment = myChar.EquippedWeapon.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Chest:
+    //            UsedEquipment = myChar.EquippedChest.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Helmet:
+    //            UsedEquipment = myChar.EquippedHelmet.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Pants:
+    //            UsedEquipment = myChar.EquippedPants.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Amulet:
+    //            UsedEquipment = myChar.EquippedAmulet.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Ring:
+    //            UsedEquipment = myChar.EquippedRing.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Boots:
+    //            UsedEquipment = myChar.EquippedBoots.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Belt:
+    //            UsedEquipment = myChar.EquippedBelt.IsValid();
+    //            break;
+    //        case EquipmentSlotType.Shield:
+    //            UsedEquipment = myChar.EquippedShield.IsValid();
+    //            break;
+    //    }
+    //    var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
+    //    popupEquipped.gameObject.SetActive(UsedEquipment);
+    //}
+
     //비착용중인 장비 UI창에 보여주는 부분
-    private void UnEquippedUiSet(Equipment equipment)
+    public void UnEquippedUiSet(Equipment equipment)
     {
         var popupUnequipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Unequipped");
 
@@ -183,44 +287,8 @@ public class UiManager : MonoBehaviour
 
         var gearStats_Text = popupUnequipped.Find("Text_GearStats").GetComponent<TMP_Text>();
 
-        Sprite equipmentIcon = null;
-        switch (equipment.SlotType)
-        {
-            case EquipmentSlotType.Wand:
-                equipmentIcon = wandIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Staff:
-                equipmentIcon = staffIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Chest:
-                equipmentIcon = chestIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Helmet:
-                equipmentIcon = helmetIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Pants:
-                equipmentIcon = pantsIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Amulet:
-                equipmentIcon = amuletIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Ring:
-                equipmentIcon = ringIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Boots:
-                equipmentIcon = bootsIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Belt:
-                equipmentIcon = beltIcon[equipment.EquipmentIndex];
-                break;
-            case EquipmentSlotType.Shield:
-                equipmentIcon = shieldIcon[equipment.EquipmentIndex];
-                break;
-            default:
-                break;
-        }
         TitleGradeColorSet(gradeTitle, equipment.Grade);
-        IconUISet(icon, equipment, equipmentIcon);
+        IconUISet(icon, equipment, EquipmentIconSet(equipment));
 
         title_Text.text = equipment.Grade.ToString();
         itemName_Text.text = "아이템 이름";
@@ -302,6 +370,7 @@ public class UiManager : MonoBehaviour
         }
     }
 
+    //장비SummonEquipment 창이 열릴때 선택된 장비의 Title의 배경 옵션색상 변경해주는 부분
     private void TitleGradeColorSet(Transform title, EquipmentGrade grade)
     {
         var bg = title.Find("Bg").GetComponent<Image>();
@@ -327,5 +396,35 @@ public class UiManager : MonoBehaviour
         equipmentIcon.sprite = iconSprite;
         
         lvText.text = $"LV.{ownedEquipment.EquipmentLevel}";
+    }
+
+    private Sprite EquipmentIconSet(Equipment equipment)
+    {
+        Sprite equipmentIcon = null;
+        switch (equipment.SlotType)
+        {
+            case EquipmentSlotType.Wand:
+                return equipmentIcon = wandIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Staff:
+                return equipmentIcon = staffIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Chest:
+                return equipmentIcon = chestIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Helmet:
+                return equipmentIcon = helmetIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Pants:
+                return equipmentIcon = pantsIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Amulet:
+                return equipmentIcon = amuletIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Ring:
+                return equipmentIcon = ringIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Boots:
+                return equipmentIcon = bootsIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Belt:
+                return equipmentIcon = beltIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Shield:
+                return equipmentIcon = shieldIcon[equipment.EquipmentIndex];
+            default:
+                return equipmentIcon;
+        }
     }
 }
