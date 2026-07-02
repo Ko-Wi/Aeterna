@@ -31,7 +31,7 @@ public class EquipmentSummoner : MonoBehaviour
     public EquipmentSlotType GetRandomSummonSlot()
     {
         // 무기를 착용하지 않았다면 무기 최우선
-        if (myChar.WeaponIndex < 0)
+        if (myChar.EquippedWeapon.EquipmentIndex == -1)
         {
             return GetRandomWeaponType();
         }
@@ -66,9 +66,7 @@ public class EquipmentSummoner : MonoBehaviour
 
         AddOwnedEquipment(summonSlot, grade, equipmentIndex);
 
-        //ApplySummonedEquipment(summonSlot, EquipmentIndex);
-
-        Debug.Log($"뽑힌 장비 타입: {summonSlot} // {equipmentIndex} // {grade}");
+        //Debug.Log($"뽑힌 장비 타입: {summonSlot} // {equipmentIndex} // {grade}");
 
         uiManager.SummonUiSet();
 
@@ -119,53 +117,5 @@ public class EquipmentSummoner : MonoBehaviour
         int maxIndex = minIndex + counts[gradeIndex];
 
         return UnityEngine.Random.Range(minIndex, maxIndex);
-    }
-    private void ApplySummonedEquipment(EquipmentSlotType slotType, int index)
-    {
-        switch (slotType)
-        {
-            case EquipmentSlotType.Wand:
-                myChar.WeaponType = PartsType.Wand;
-                myChar.WeaponIndex = index;
-                break;
-
-            case EquipmentSlotType.Staff:
-                myChar.WeaponType = PartsType.Staff;
-                myChar.WeaponIndex = index;
-                break;
-
-            case EquipmentSlotType.Helmet:
-                myChar.HelmetIndex = index;
-                break;
-
-            case EquipmentSlotType.Chest:
-                myChar.ChestIndex = index;
-                break;
-
-            case EquipmentSlotType.Pants:
-                myChar.PantsIndex = index;
-                break;
-
-            case EquipmentSlotType.Boots:
-                myChar.BootsIndex = index;
-                break;
-
-            case EquipmentSlotType.Ring:
-                myChar.RingIndex = index;
-                break;
-
-            case EquipmentSlotType.Amulet:
-                myChar.AmuletIndex = index;
-                break;
-
-            case EquipmentSlotType.Belt:
-                myChar.BeltIndex = index;
-                break;
-
-            case EquipmentSlotType.Shield:
-                myChar.LeftItemType = PartsType.Shield;
-                myChar.LeftItemIndex = index;
-                break;
-        }
     }
 }

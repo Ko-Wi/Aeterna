@@ -1,3 +1,4 @@
+using LayerLab.ArtMakerUnity;
 using NUnit.Framework;
 using System.Collections.Generic;
 using TMPro;
@@ -36,6 +37,16 @@ public class UiManager : MonoBehaviour
     [SerializeField] private GameObject SummonBtn;
     [SerializeField] private GameObject EquipBtn;
 
+    [Header("장비 슬롯")]
+    public GameObject WeaponSlot;
+    public GameObject HelmetSlot;
+    public GameObject ChestSlot;
+    public GameObject PantsSlot;
+    public GameObject BootsSlot;
+    public GameObject RingSlot;
+    public GameObject AmuletSlot;
+    public GameObject BeltSlot;
+    public GameObject ShieldSlot;
 
     [Header("장비관련 아이콘 이미지")]
     [Header("===========무기===========")]
@@ -72,11 +83,13 @@ public class UiManager : MonoBehaviour
 
         UIBasicSet();
     }
+    //단조로 뽑힌 아이템UI 관련 
     public void UIBasicSet()
     {
         bool isEquipBtn = myChar.ForgeEquipments.Count > 0;
 
         EquipBtn.SetActive(isEquipBtn);
+        //SummonBtn.SetActive(!isEquipBtn);
 
         if (!EquipBtn.activeSelf) return;
 
@@ -99,6 +112,64 @@ public class UiManager : MonoBehaviour
             int grade = (int)summonEquipment.Grade;
             NomalArea.GetChild(grade).gameObject.SetActive(true);
         }
+    }
+
+    //장착중인 장비 UI관련
+    public void EquippedSlotSet(Equipment equipment)
+    {
+        GameObject selectSlot = null;
+        Equipment currentEquipment = null;
+        switch (equipment.SlotType)
+        {
+            case EquipmentSlotType.Wand:
+            case EquipmentSlotType.Staff:
+                selectSlot = WeaponSlot;
+                currentEquipment = myChar.EquippedWeapon;
+                break;
+            case EquipmentSlotType.Chest:
+                selectSlot = ChestSlot;
+                currentEquipment = myChar.EquippedChest;
+                break;
+            case EquipmentSlotType.Helmet:
+                selectSlot = HelmetSlot;
+                currentEquipment = myChar.EquippedHelmet;
+                break;
+            case EquipmentSlotType.Pants:
+                selectSlot = PantsSlot;
+                currentEquipment = myChar.EquippedPants;
+                break;
+            case EquipmentSlotType.Amulet:
+                selectSlot = AmuletSlot;
+                currentEquipment = myChar.EquippedAmulet;
+                break;
+            case EquipmentSlotType.Ring:
+                selectSlot = RingSlot;
+                currentEquipment = myChar.EquippedRing;
+                break;
+            case EquipmentSlotType.Boots:
+                selectSlot = BootsSlot;
+                currentEquipment = myChar.EquippedBoots;
+                break;
+            case EquipmentSlotType.Belt:
+                selectSlot = BeltSlot;
+                currentEquipment = myChar.EquippedBelt;
+                break;
+            case EquipmentSlotType.Shield:
+                selectSlot = ShieldSlot;
+                currentEquipment = myChar.EquippedShield;
+                break;
+        }
+
+        var add = selectSlot.transform.Find("Add_1").gameObject;
+        var equipSlot = selectSlot.transform.Find("EquipSlot").gameObject;
+        var icon = equipSlot.transform.Find("Icon").GetComponent<Image>();
+        var lv_Text = equipSlot.transform.Find("Text_Level").GetComponent<TMP_Text>();
+
+        add.SetActive(currentEquipment.EquipmentIndex == -1);
+        equipSlot.SetActive(currentEquipment.EquipmentIndex != -1);
+        lv_Text.text = $"Lv.{currentEquipment.EquipmentLevel}";
+        IconUISet(selectSlot.transform, currentEquipment, EquipmentIconSet(currentEquipment));
+
     }
 
     //장비 뽑기 버튼클릭했을때 Ui띄워주는 부분
@@ -229,48 +300,6 @@ public class UiManager : MonoBehaviour
 
         EquipmentOption(group_Buff, equipment);
     }
-    //public void SummonEquipmentSet()
-    //{
-    //    //if (!SummonEquipment.activeSelf) return;
-
-    //    var SelectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
-
-    //    bool UsedEquipment = false;
-
-    //    switch (SelectEquipment.SlotType)
-    //    {
-    //        case EquipmentSlotType.Wand:
-    //        case EquipmentSlotType.Staff:
-    //            UsedEquipment = myChar.EquippedWeapon.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Chest:
-    //            UsedEquipment = myChar.EquippedChest.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Helmet:
-    //            UsedEquipment = myChar.EquippedHelmet.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Pants:
-    //            UsedEquipment = myChar.EquippedPants.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Amulet:
-    //            UsedEquipment = myChar.EquippedAmulet.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Ring:
-    //            UsedEquipment = myChar.EquippedRing.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Boots:
-    //            UsedEquipment = myChar.EquippedBoots.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Belt:
-    //            UsedEquipment = myChar.EquippedBelt.IsValid();
-    //            break;
-    //        case EquipmentSlotType.Shield:
-    //            UsedEquipment = myChar.EquippedShield.IsValid();
-    //            break;
-    //    }
-    //    var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
-    //    popupEquipped.gameObject.SetActive(UsedEquipment);
-    //}
 
     //비착용중인 장비 UI창에 보여주는 부분
     public void UnEquippedUiSet(Equipment equipment)

@@ -43,22 +43,7 @@ public class MyObject : MonoBehaviour
     public Equipment EquippedRing = new Equipment();     //반지
     public Equipment EquippedAmulet = new Equipment();   //목걸이
     public Equipment EquippedBelt = new Equipment();     //벨트
-
-    public int HelmetIndex = -1;            //투구
-    public int ChestIndex = -1;             //갑옷
-
-    [Header("장착 중인 파츠 인덱스 (-1 = 미착용)")]
-    public PartsType WeaponType;            
-    public int WeaponIndex = -1;            //무기
-    public PartsType LeftItemType;
-    public int LeftItemIndex = -1;          //방패(보조무기)
-
-    public int PantsIndex = -1;             //바지
-    public int BootsIndex = -1;             //신발
-    public int RingIndex = -1;              //반지
-    public int AmuletIndex = -1;            //목걸이
-    public int BeltIndex = -1;              //벨트
-
+        
     [Header("코스튬 인덱스")]
     public PartsType CostumeWeaponType;
     public int CostumeWeapon = -1;

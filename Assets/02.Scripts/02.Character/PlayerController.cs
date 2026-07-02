@@ -108,22 +108,35 @@ public class PlayerController : MonoBehaviour
         partsManager.SetColor(ColorTargetType.Beard, Color.white);
     }
 
-    private void ApplyEquipFromMyChar()
+    public void ApplyEquipFromMyChar()
     {
+        var partType = PartsType.Wand;
+
+        if(myChar.EquippedWeapon.SlotType == EquipmentSlotType.Wand)
+        {
+            partType = PartsType.Wand;
+        }
+        else if (myChar.EquippedWeapon.SlotType == EquipmentSlotType.Staff)
+        {
+            partType = PartsType.Staff;
+        }
         if (myChar.HairIndex >= 0)
             partsManager.EquipParts(PartsType.Hair, myChar.HairIndex);
 
         if (myChar.BeardIndex >= 0)
             partsManager.EquipParts(PartsType.Beard, myChar.BeardIndex);
 
-        if (myChar.HelmetIndex >= 0)
-            partsManager.EquipParts(PartsType.Helmet, myChar.HelmetIndex);
+        if (myChar.EquippedWeapon.EquipmentIndex >= 0)
+            EquipGroupExclusive(partType, myChar.EquippedWeapon.EquipmentIndex);
 
-        if (myChar.WeaponIndex >= 0)
-            EquipGroupExclusive(myChar.WeaponType, myChar.WeaponIndex);
+        if (myChar.EquippedChest.EquipmentIndex >= 0)
+            EquipGroupExclusive(PartsType.Chest, myChar.EquippedChest.EquipmentIndex);
 
-        if (myChar.LeftItemIndex >= 0)
-            EquipGroupExclusive(myChar.LeftItemType, myChar.LeftItemIndex);
+        if (myChar.EquippedHelmet.EquipmentIndex >= 0)
+            partsManager.EquipParts(PartsType.Helmet, myChar.EquippedHelmet.EquipmentIndex);
+
+        if (myChar.EquippedShield.EquipmentIndex >= 0)
+            EquipGroupExclusive(PartsType.Shield, myChar.EquippedShield.EquipmentIndex);
     }
 
     /// <summary>
@@ -187,7 +200,7 @@ public class PlayerController : MonoBehaviour
         if (isAttacking) return;
 
         // WeaponIndex가 -1이면 무기 미착용 상태
-        if (myChar.WeaponIndex < 0) return;
+        if (myChar.EquippedShield.EquipmentIndex < 0) return;
 
         Collider2D target = Physics2D.OverlapCircle(
             attackCenter.position,

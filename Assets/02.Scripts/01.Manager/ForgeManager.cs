@@ -22,6 +22,7 @@ public class ForgeManager : MonoBehaviour
     private MyObject myChar;
     private GameManager gameManager;
     private UiManager uiManager;
+    [SerializeField] private PlayerController playerController;
 
     private void Awake()
     {
@@ -67,6 +68,10 @@ public class ForgeManager : MonoBehaviour
         }
 
         ShowNextForgeEquipment();
+        uiManager.EquippedSlotSet(newEquipment);
+
+        if (playerController != null)
+            playerController.ApplyEquipFromMyChar();
     }
 
     //장비 장착 눌렀을때 장착처리해주기 [장비장착 or 장비교환]
@@ -170,8 +175,9 @@ public class ForgeManager : MonoBehaviour
 
     private EquipmentSlotType GetRandomSummonSlot()
     {
-        if (myChar.WeaponIndex < 0)
+        if (myChar.EquippedWeapon.EquipmentIndex == -1)
         {
+            Debug.Log("무기");
             return GetRandomWeaponType();
         }
 
@@ -188,7 +194,7 @@ public class ForgeManager : MonoBehaviour
             EquipmentSlotType.Belt,
             EquipmentSlotType.Shield
         };
-
+        Debug.Log("기타~!");
         int randomIndex = UnityEngine.Random.Range(0, summonParts.Length);
         return summonParts[randomIndex];
     }
@@ -300,7 +306,7 @@ public class ForgeManager : MonoBehaviour
             case EquipmentSlotType.Pants:
             case EquipmentSlotType.Boots:
             case EquipmentSlotType.Shield:
-                return EquipmentStatusType.Defense;
+                return EquipmentStatusType.Attack;
 
             case EquipmentSlotType.Ring:
             case EquipmentSlotType.Amulet:
