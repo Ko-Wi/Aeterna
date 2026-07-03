@@ -24,6 +24,8 @@ public class ForgeManager : MonoBehaviour
     private UiManager uiManager;
     [SerializeField] private PlayerController playerController;
 
+    [SerializeField] private CoinDropEffect coinDropEffectPrefab;
+
     private void Awake()
     {
         _instance = this;
@@ -34,6 +36,15 @@ public class ForgeManager : MonoBehaviour
         myChar = MyObject.MyChar;
         gameManager = GameManager.Instance;
         uiManager = UiManager.Instance;
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            Debug.Log(111);
+            OnClickSellForgeEquipment();
+        }
     }
     //현재 보여지는 장비 가져오기
     private Equipment GetCurrentForgeEquipment()
@@ -142,6 +153,53 @@ public class ForgeManager : MonoBehaviour
         }
 
         uiManager.SummonUiSet();
+    }
+    //동전 드랍효과
+    public void OnClickSellForgeEquipment()
+    {
+        Equipment sellEquipment = GetCurrentForgeEquipment();
+
+        if (sellEquipment == null || !sellEquipment.IsValid())
+            return;
+
+        int sellPrice = GetSellPrice(sellEquipment);
+
+        int currentIndex = myChar.ForgeEquipments.Count - 1;
+        myChar.ForgeEquipments.RemoveAt(currentIndex);
+
+        //myChar.Gold += sellPrice;
+
+        if (coinDropEffectPrefab != null)
+            coinDropEffectPrefab.SellCoinEffectSetup();
+
+        ShowNextForgeEquipment();
+
+        // uiManager.GoldUISetup();
+    }
+
+    //동전 판매 가격
+    private int GetSellPrice(Equipment equipment)
+    {
+        int gradeIndex = (int)equipment.Grade;
+        int level = Mathf.Max(1, equipment.EquipmentLevel);
+
+        int[] gradeBasePrices =
+        {
+            10,     // Common
+            20,     // Magic
+            40,     // Rare
+            80,     // Heroic
+            150,    // Legendary
+            300,    // Unique
+            600,    // Mythic
+            1200,   // Ancient
+            2500,   // Abyssal
+            5000    // Genesis
+        };
+
+        int basePrice = gradeBasePrices[gradeIndex];
+
+        return basePrice + level * basePrice / 10;
     }
 
     public Equipment ForgeEquipment()

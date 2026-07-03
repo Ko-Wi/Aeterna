@@ -95,21 +95,21 @@ public class UiManager : MonoBehaviour
 
         for (int i = 0; i < myChar.ForgeEquipments.Count; i++)
         {
-            var summonEquipment = myChar.ForgeEquipments[i];
+            var forgeEquipment = myChar.ForgeEquipments[i];
             
             var EquipSlot = EquipBtn.transform.GetChild(i);
             var NomalArea = EquipSlot.GetChild(0);
             var Icon = EquipSlot.Find("Icon").GetComponent<Image>();
             var lv_Text = EquipSlot.Find("Text_Level").GetComponent<TMP_Text>();
 
-            Icon.sprite = EquipmentIconSet(summonEquipment);
-            lv_Text.text = $"LV.{summonEquipment.EquipmentLevel}";
+            Icon.sprite = EquipmentIconSet(forgeEquipment);
+            lv_Text.text = $"LV.{forgeEquipment.EquipmentLevel}";
 
             for (int j = 0; j < NomalArea.childCount; j++)
             {
                 NomalArea.GetChild(j).gameObject.SetActive(false);
             }
-            int grade = (int)summonEquipment.Grade;
+            int grade = (int)forgeEquipment.Grade;
             NomalArea.GetChild(grade).gameObject.SetActive(true);
         }
     }
@@ -169,6 +169,49 @@ public class UiManager : MonoBehaviour
         equipSlot.SetActive(currentEquipment.EquipmentIndex != -1);
         lv_Text.text = $"Lv.{currentEquipment.EquipmentLevel}";
         IconUISet(selectSlot.transform, currentEquipment, EquipmentIconSet(currentEquipment));
+
+    }
+    public void ShowEquippedEquipmentInfo(int SlotIndex)
+    {
+        Equipment equipment = null;
+        switch (SlotIndex)
+        {
+            case 0:
+                equipment = myChar.EquippedWeapon;
+                break;
+            case 1:
+                equipment = myChar.EquippedHelmet;
+                break;
+            case 2:
+                equipment = myChar.EquippedChest;
+                break;
+            case 3:
+                equipment = myChar.EquippedPants;
+                break;
+            case 4:
+                equipment = myChar.EquippedBoots;
+                break;
+            case 5:
+                equipment = myChar.EquippedRing;
+                break;
+            case 6:
+                equipment = myChar.EquippedAmulet;
+                break;
+            case 7:
+                equipment = myChar.EquippedBelt;
+                break;
+            case 8:
+                equipment = myChar.EquippedShield;
+                break;
+        }
+        if (equipment.EquipmentIndex == -1) return;
+
+        SummonEquipment.SetActive(true);
+
+        var Popup_Unequipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Unequipped");
+        Popup_Unequipped.gameObject.SetActive(false);
+
+        EquippedUiSet(equipment);
 
     }
 
@@ -290,6 +333,7 @@ public class UiManager : MonoBehaviour
         var group_Buff = popupEquipped.Find("Group_Buff");
 
         var gearStats_Text = popupEquipped.Find("Text_GearStats").GetComponent<TMP_Text>();
+        var usedTitle_Text = popupEquipped.Find("UsedTitle").GetComponentInChildren<TMP_Text>();
 
         TitleGradeColorSet(gradeTitle, equipment.Grade);
         IconUISet(icon, equipment, EquipmentIconSet(equipment));
@@ -297,7 +341,7 @@ public class UiManager : MonoBehaviour
         title_Text.text = equipment.Grade.ToString();
         itemName_Text.text = "장착 중인 아이템";
         gearStats_Text.text = "장비 능력치";
-
+        usedTitle_Text.text = "착용중";
         EquipmentOption(group_Buff, equipment);
     }
 
@@ -315,6 +359,8 @@ public class UiManager : MonoBehaviour
         var group_Buff = popupUnequipped.Find("Group_Buff");
 
         var gearStats_Text = popupUnequipped.Find("Text_GearStats").GetComponent<TMP_Text>();
+
+        popupUnequipped.gameObject.SetActive(true);
 
         TitleGradeColorSet(gradeTitle, equipment.Grade);
         IconUISet(icon, equipment, EquipmentIconSet(equipment));

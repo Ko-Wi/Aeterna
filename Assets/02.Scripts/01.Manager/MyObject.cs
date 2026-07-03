@@ -33,16 +33,15 @@ public class MyObject : MonoBehaviour
     public int BeardIndex = -1;             //수염
 
     public EquipmentSlotType SelectEquipmentType;
+    public Equipment EquippedWeapon = new Equipment();   //무기
     public Equipment EquippedHelmet = new Equipment();   //투구
     public Equipment EquippedChest = new Equipment();    //갑옷
-    public Equipment EquippedWeapon = new Equipment();   //무기
-    public Equipment EquippedShield = new Equipment();   //방패[보조무기]
-
     public Equipment EquippedPants = new Equipment();    //하의
     public Equipment EquippedBoots = new Equipment();    //신발
     public Equipment EquippedRing = new Equipment();     //반지
     public Equipment EquippedAmulet = new Equipment();   //목걸이
     public Equipment EquippedBelt = new Equipment();     //벨트
+    public Equipment EquippedShield = new Equipment();   //방패[보조무기]
         
     [Header("코스튬 인덱스")]
     public PartsType CostumeWeaponType;
