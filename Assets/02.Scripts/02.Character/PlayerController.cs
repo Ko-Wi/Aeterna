@@ -23,6 +23,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private LayerMask monsterLayer;
     [SerializeField] private Transform attackCenter;
 
+    [Header("Projectile")]
+    [SerializeField] private List<GameObject> projectileList;
+    [SerializeField] private Transform attackPos;
+    [SerializeField] private int projectileIndex = 0;
+
+    [Header("멀티샷")]
+    [SerializeField] private int maxProjectileTargetCount = 1;
+
 
     void Awake()
     {
@@ -30,6 +38,9 @@ public class PlayerController : MonoBehaviour
 
         if (attackCenter == null)
             attackCenter = transform;
+
+        if (attackPos == null)
+            attackPos = attackCenter;
     }
     void Start()
     {
@@ -50,41 +61,12 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        //if (Input.GetKeyDown(KeyCode.S))
-        //{
-        //    ApplyEquipFromMyChar();
-        //}
-        //if (Input.GetKeyDown(KeyCode.V))
-        //{
-        //    partsManager.ToggleParts(partType, boolPart);
-        //}
-        //if (Input.GetKeyDown(KeyCode.P))
-        //{
-        //    var item = equipmentPresetData.GetItem(partIndex);
-
-        //    partsManager.ApplyPresetItem(item);
-
-        //}
-
-        //if (Input.GetKeyDown(KeyCode.A))
-        //{
-        //    UnequipAllParts();
-        //}
-
-
-        //// 테스트용: R 키를 누를 때마다 무기 1회 랜덤 뽑기
-        //if (Input.GetKeyDown(KeyCode.R))
-        //{
-        //    DrawRandomWeapon();
-        //}
-
         // 무기 장착 중이면 자동 공격 체크
         TryAutoAttack();
-
     }
 
-    public void UnequipAllParts()
+    //모든파츠 벗기
+    public void UnEquipAllParts()
     {
         if (partsManager == null) return;
 
@@ -108,6 +90,7 @@ public class PlayerController : MonoBehaviour
         partsManager.SetColor(ColorTargetType.Beard, Color.white);
     }
 
+    //장비 착용 해주는 코드
     public void ApplyEquipFromMyChar()
     {
         var partType = PartsType.Wand;
@@ -195,45 +178,172 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 무기 장착 상태이고, 범위 안에 몬스터가 있으면 자동 공격합니다.
     /// </summary>
+
     private void TryAutoAttack()
     {
-        if (isAttacking) return;
+        if (myChar == null) return;
 
-        // WeaponIndex가 -1이면 무기 미착용 상태
-        if (myChar.EquippedShield.EquipmentIndex < 0) return;
+        // 무기 미착용이면 공격하지 않음
+        if (myChar.EquippedWeapon.EquipmentIndex < 0)
+        {
+            if (isAttacking)
+                EndAttack();
 
+            return;
+        }
+
+        // 공격 중일 때 몬스터가 없으면 공격 종료
+        if (isAttacking)
+        {
+            if (!HasAttackTarget())
+                EndAttack();
+
+            return;
+        }
+
+        // 공격 중이 아닐 때 몬스터가 없으면 아무것도 안 함
+        if (!HasAttackTarget()) return;
+
+        Attack();
+    }
+    private bool HasAttackTarget()
+    {
         Collider2D target = Physics2D.OverlapCircle(
             attackCenter.position,
             attackRange,
             monsterLayer
         );
 
-        if (target == null) return;
-        Debug.Log("자동공격 시작!");
-        Attack(target);
-    }
+        if (target == null) return false;
 
-    private void Attack(Collider2D target)
+        MonsterController monster = target.GetComponent<MonsterController>();
+
+        if (monster == null) return false;
+        if (!monster.gameObject.activeInHierarchy) return false;
+
+        return true;
+    }
+    
+    private void Attack()
     {
         if (isAttacking) return;
 
         isAttacking = true;
-        Debug.Log("공격모션 시작!!");
-        _anim.Play("Attack", 0, 0f);
 
-        MonsterController monster = target.GetComponent<MonsterController>();
+        _anim.Play("Attack", 0, 0f);
     }
 
-    private void EndAttack()
+    public void EnemyHit()
+    {
+        if (!isAttacking) return;
+
+        List<MonsterController> targets = FindAttackTargets(maxProjectileTargetCount);
+
+        if (targets.Count == 0)
+        {
+            EndAttack();
+            return;
+        }
+
+        for (int i = 0; i < targets.Count; i++)
+        {
+            FireProjectile(targets[i]);
+        }
+    }
+    private List<MonsterController> FindAttackTargets(int maxCount)
+    {
+        List<MonsterController> targets = new List<MonsterController>();
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(
+            attackCenter.position,
+            attackRange,
+            monsterLayer
+        );
+
+        if (colliders == null || colliders.Length == 0)
+            return targets;
+
+        List<MonsterController> tempTargets = new List<MonsterController>();
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            MonsterController monster = colliders[i].GetComponent<MonsterController>();
+
+            if (monster == null) continue;
+            if (!monster.gameObject.activeInHierarchy) continue;
+
+            tempTargets.Add(monster);
+        }
+
+        // 가까운 몬스터 우선 정렬
+        tempTargets.Sort((a, b) =>
+        {
+            float distanceA = Vector2.Distance(attackCenter.position, a.transform.position);
+            float distanceB = Vector2.Distance(attackCenter.position, b.transform.position);
+
+            return distanceA.CompareTo(distanceB);
+        });
+
+        for (int i = 0; i < tempTargets.Count; i++)
+        {
+            if (targets.Count >= maxCount)
+                break;
+
+            targets.Add(tempTargets[i]);
+        }
+
+        return targets;
+    }
+
+    private void FireProjectile(MonsterController target)
+    {
+        if (target == null) return;
+
+        if (projectileList == null || projectileList.Count == 0)
+        {
+            Debug.LogWarning("projectileList에 Projectile 프리팹이 없습니다.");
+            return;
+        }
+
+        if (projectileIndex < 0 || projectileIndex >= projectileList.Count)
+        {
+            Debug.LogWarning("projectileIndex가 projectileList 범위를 벗어났습니다.");
+            return;
+        }
+
+        GameObject projectilePrefab = projectileList[projectileIndex];
+
+        if (projectilePrefab == null)
+        {
+            Debug.LogWarning("선택된 Projectile 프리팹이 비어있습니다.");
+            return;
+        }
+
+        Vector3 spawnPos = attackPos != null
+            ? attackPos.position
+            : transform.position;
+
+        GameObject projectileObj = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
+
+        ProjectileController projectile = projectileObj.GetComponent<ProjectileController>();
+
+        if (projectile == null)
+        {
+            Debug.LogWarning("Projectile 프리팹에 ProjectileController가 없습니다.");
+            Destroy(projectileObj);
+            return;
+        }
+
+        projectile.Init(target, attackDamage);
+    }
+
+    public void EndAttack()
     {
         isAttacking = false;
-        Debug.Log("공격모션 끝 아이들전환!!!");
+
         _anim.Play("Idle");
     }
-    private void EnemyHit()
-    {
-        Debug.Log(11111);
-    }
+
     private void OnDrawGizmosSelected()
     {
         Transform center = attackCenter != null ? attackCenter : transform;
