@@ -151,7 +151,6 @@ public class ForgeManager : MonoBehaviour
             uiManager.SummonEquipment.SetActive(false);
             return;
         }
-
         uiManager.SummonUiSet();
     }
     //동전 드랍효과
@@ -167,12 +166,13 @@ public class ForgeManager : MonoBehaviour
         int currentIndex = myChar.ForgeEquipments.Count - 1;
         myChar.ForgeEquipments.RemoveAt(currentIndex);
 
-        //myChar.Gold += sellPrice;
+        myChar.Gold += sellPrice;
 
         if (coinDropEffectPrefab != null)
             coinDropEffectPrefab.SellCoinEffectSetup();
 
         ShowNextForgeEquipment();
+        uiManager.SummonEquipment.SetActive(false);
 
         // uiManager.GoldUISetup();
     }
@@ -186,20 +186,20 @@ public class ForgeManager : MonoBehaviour
         int[] gradeBasePrices =
         {
             10,     // Common
-            20,     // Magic
-            40,     // Rare
-            80,     // Heroic
-            150,    // Legendary
-            300,    // Unique
-            600,    // Mythic
-            1200,   // Ancient
-            2500,   // Abyssal
-            5000    // Genesis
+            12,     // Magic
+            15,     // Rare
+            18,     // Heroic
+            21,    // Legendary
+            25,    // Unique
+            29,    // Mythic
+            33,   // Ancient
+            37,   // Abyssal
+            42    // Genesis
         };
 
         int basePrice = gradeBasePrices[gradeIndex];
 
-        return basePrice + level * basePrice / 10;
+        return basePrice;
     }
 
     public Equipment ForgeEquipment()
@@ -226,7 +226,7 @@ public class ForgeManager : MonoBehaviour
 
         myChar.ForgeEquipments.Add(equipment);
 
-        Debug.Log($"단조 완료: {slotType} / {grade} / Index: {equipmentIndex} / {statusType}: {statusValue} / Option Count: {options.Count}");
+        //Debug.Log($"단조 완료: {slotType} / {grade} / Index: {equipmentIndex} / {statusType}: {statusValue} / Option Count: {options.Count}");
 
         return equipment;
     }
@@ -235,7 +235,6 @@ public class ForgeManager : MonoBehaviour
     {
         if (myChar.EquippedWeapon.EquipmentIndex == -1)
         {
-            Debug.Log("무기");
             return GetRandomWeaponType();
         }
 
@@ -252,7 +251,6 @@ public class ForgeManager : MonoBehaviour
             EquipmentSlotType.Belt,
             EquipmentSlotType.Shield
         };
-        Debug.Log("기타~!");
         int randomIndex = UnityEngine.Random.Range(0, summonParts.Length);
         return summonParts[randomIndex];
     }

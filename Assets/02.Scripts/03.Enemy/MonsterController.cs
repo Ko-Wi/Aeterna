@@ -1,9 +1,29 @@
 using UnityEngine;
+using UnityEngine.UI;
 
+public interface IEnemy
+{
+    void AttackHit(double damage, bool Cri = false);
+    void EnemyDestroy();
+    Transform ObjTransform();
+}
+public enum EnemyCategory
+{
+    None,
+    Nomal,
+    Boss
+}
 public class MonsterController : MonoBehaviour
 {
+    public EnemyCategory _enemyCategory;
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float arriveDistance = 0.05f;
+    public Animator _anim;
+
+    public double maxHp;
+    public double currentHp;
+    public GameObject HPBar;
+    private Slider hpBarSlider;
 
     private PathRoute pathRoute;
     private int currentPointIndex;

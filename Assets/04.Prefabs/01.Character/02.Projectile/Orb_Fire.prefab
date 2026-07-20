@@ -172,3 +172,4 @@ MonoBehaviour:
   moveSpeed: 8
   hitDistance: 0.15
   lifeTime: 3
+  hiatEffect: {fileID: 3802574373605031282, guid: 92f091a7f54daa849b1ff75934355c6e, type: 3}

@@ -6,6 +6,7 @@ public class ProjectileController : MonoBehaviour
     [SerializeField] private float hitDistance = 0.15f;
     [SerializeField] private float lifeTime = 3f;
 
+    [SerializeField] private GameObject hiatEffect;
     private MonsterController target;
     private int damage;
     private float timer;
@@ -50,7 +51,7 @@ public class ProjectileController : MonoBehaviour
         {
             // MonsterController 쪽에 데미지 함수가 있으면 여기에 연결
             //target.Damage(damage);
-            Debug.Log("공격");
+            GameObject projectileObj = Instantiate(hiatEffect, target.transform.position, Quaternion.identity);
         }
 
         Destroy(gameObject);

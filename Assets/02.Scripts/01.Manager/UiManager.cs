@@ -1,6 +1,7 @@
 using LayerLab.ArtMakerUnity;
 using NUnit.Framework;
 using System.Collections.Generic;
+using System.Globalization;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -69,6 +70,9 @@ public class UiManager : MonoBehaviour
     [Header("============등급 색상==========")]
     public Color[] bgColor;
     public Color[] highLight1Color;
+
+    [SerializeField] private Color optionUpColor = Color.green;
+    [SerializeField] private Color optionDownColor = Color.red;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -171,6 +175,7 @@ public class UiManager : MonoBehaviour
         IconUISet(selectSlot.transform, currentEquipment, EquipmentIconSet(currentEquipment));
 
     }
+    //착용장비 창을 누르면 장비 정보를 보여주기위함[Onclick]
     public void ShowEquippedEquipmentInfo(int SlotIndex)
     {
         Equipment equipment = null;
@@ -211,7 +216,7 @@ public class UiManager : MonoBehaviour
         var Popup_Unequipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Unequipped");
         Popup_Unequipped.gameObject.SetActive(false);
 
-        EquippedUiSet(equipment);
+        EquippedUiSet(equipment, null);
 
     }
 
@@ -242,7 +247,14 @@ public class UiManager : MonoBehaviour
 
         Equipment selectEquipment = myChar.ForgeEquipments[equipmentCount - 1];
 
-        UnEquippedUiSet(selectEquipment);
+        Equipment equippedEquipment = GetEquippedEquipmentBySlot(selectEquipment.SlotType);
+
+        if (equippedEquipment != null && equippedEquipment.EquipmentIndex == -1)
+        {
+            equippedEquipment = null;
+        }
+
+        UnEquippedUiSet(selectEquipment, equippedEquipment);
         SummonEquipmentSet();
     }
 
@@ -254,25 +266,26 @@ public class UiManager : MonoBehaviour
             return;
 
         // 현재 유저에게 보여줄 장비 = 마지막으로 뽑힌 장비
-        var SelectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
+        var selectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
 
         // 현재 뽑힌 장비와 같은 슬롯에 장착 중인 장비 가져오기
-        Equipment equippedEquipment = GetEquippedEquipmentBySlot(SelectEquipment.SlotType);
+        Equipment equippedEquipment = GetEquippedEquipmentBySlot(selectEquipment.SlotType);
 
         // 장착 중인 장비가 유효한 장비인지 체크
-        bool UsedEquipment = IsEquipmentValid(equippedEquipment);
+        bool usedEquipment = IsEquipmentValid(equippedEquipment);
 
         // 착용 중인 장비 팝업
         var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
 
         // 장착 중인 장비가 있으면 켜고, 없으면 끔
-        popupEquipped.gameObject.SetActive(UsedEquipment);
+        popupEquipped.gameObject.SetActive(usedEquipment);
 
         // 장착 중인 장비가 있으면 Popup_Equipped UI에 데이터 표시
-        if (UsedEquipment)
+        if (usedEquipment)
         {
-            EquippedUiSet(equippedEquipment);
+            EquippedUiSet(equippedEquipment, selectEquipment);
         }
+        
     }
 
     // 현재 뽑힌 장비 SlotType 기준으로 같은 부위의 착용 장비 가져오기
@@ -319,8 +332,8 @@ public class UiManager : MonoBehaviour
         return equipment != null && equipment.IsValid();
     }
 
-    // 착용 중인 장비 UI창에 보여주는 부분
-    private void EquippedUiSet(Equipment equipment)
+    // 착용 중인 장비 UI창에 보여주는 부분[장착중]
+    private void EquippedUiSet(Equipment currentEquipment, Equipment newEquipment)
     {
         var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
 
@@ -335,18 +348,18 @@ public class UiManager : MonoBehaviour
         var gearStats_Text = popupEquipped.Find("Text_GearStats").GetComponent<TMP_Text>();
         var usedTitle_Text = popupEquipped.Find("UsedTitle").GetComponentInChildren<TMP_Text>();
 
-        TitleGradeColorSet(gradeTitle, equipment.Grade);
-        IconUISet(icon, equipment, EquipmentIconSet(equipment));
+        TitleGradeColorSet(gradeTitle, currentEquipment.Grade);
+        IconUISet(icon, currentEquipment, EquipmentIconSet(currentEquipment));
 
-        title_Text.text = equipment.Grade.ToString();
+        title_Text.text = currentEquipment.Grade.ToString();
         itemName_Text.text = "장착 중인 아이템";
         gearStats_Text.text = "장비 능력치";
         usedTitle_Text.text = "착용중";
-        EquipmentOption(group_Buff, equipment);
+        EquipmentOption(group_Buff, currentEquipment, newEquipment);
     }
 
-    //비착용중인 장비 UI창에 보여주는 부분
-    public void UnEquippedUiSet(Equipment equipment)
+    //비착용중인 장비 UI창에 보여주는 부분[장비뽑기]
+    public void UnEquippedUiSet(Equipment currentEquipment, Equipment newEquipment)
     {
         var popupUnequipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Unequipped");
 
@@ -362,15 +375,16 @@ public class UiManager : MonoBehaviour
 
         popupUnequipped.gameObject.SetActive(true);
 
-        TitleGradeColorSet(gradeTitle, equipment.Grade);
-        IconUISet(icon, equipment, EquipmentIconSet(equipment));
+        TitleGradeColorSet(gradeTitle, currentEquipment.Grade);
+        IconUISet(icon, currentEquipment, EquipmentIconSet(currentEquipment));
 
-        title_Text.text = equipment.Grade.ToString();
+        title_Text.text = currentEquipment.Grade.ToString();
         itemName_Text.text = "아이템 이름";
         gearStats_Text.text = "장비 능력치";
-        EquipmentOption(group_Buff, equipment);
+        //equipment는 뽑힌 아이템
+        EquipmentOption(group_Buff, currentEquipment, newEquipment);
     }
-    private void EquipmentOption(Transform group_Buff, Equipment equipment)
+    private void EquipmentOption(Transform group_Buff, Equipment currentEquipment, Equipment newEquipment)
     {
         for (int i = 0; i < group_Buff.childCount; i++)
         {
@@ -379,10 +393,10 @@ public class UiManager : MonoBehaviour
             var optionName = buffSlot.Find("Text_Buff").GetComponent<TMP_Text>();
             var optionValue = buffSlot.Find("Text_Value").GetComponent<TMP_Text>();
             var arrow = buffSlot.Find("Arrow");
-            
+
             if (i == 0)
             {
-                switch (equipment.MainStatusType)
+                switch (currentEquipment.MainStatusType)
                 {
                     case EquipmentStatusType.Attack:
                         optionName.text = "공격력";
@@ -394,23 +408,44 @@ public class UiManager : MonoBehaviour
                         optionName.text = "체력";
                         break;
                 }
-                optionValue.text = $"{equipment.MainStatusValue}";
+                optionValue.text = $"{currentEquipment.MainStatusValue}";
                 arrow.gameObject.SetActive(false);
+
+                optionValue.text = currentEquipment.MainStatusValue.ToString();
+
+                if (newEquipment != null && currentEquipment.MainStatusType == newEquipment.MainStatusType)
+                {
+                    SetCompareArrow(arrow, currentEquipment.MainStatusValue, newEquipment.MainStatusValue);
+                }
+                else
+                {
+                    arrow.gameObject.SetActive(false);
+                }
             }
             else
             {
                 int optionIndex = i - 1;
 
-                if (equipment.Options != null && optionIndex < equipment.Options.Count)
+                if (currentEquipment.Options != null && optionIndex < currentEquipment.Options.Count)
                 {
                     buffSlot.gameObject.SetActive(true);
 
-                    EquipmentOption option = equipment.Options[optionIndex];
+                    EquipmentOption option = currentEquipment.Options[optionIndex];
 
+                    EquipmentOption compareOption = FindEquipmentOption(newEquipment, option.OptionType);
                     optionName.text = GetOptionName(option.OptionType);
                     optionValue.text = $"{option.Value}";
                     arrow.gameObject.SetActive(false);
-                }
+
+                    if (newEquipment != null)
+                    {
+                        SetCompareArrow(arrow, option.Value, compareOption.Value);
+                    }
+                    else
+                    {
+                        arrow.gameObject.SetActive(false);
+                    }
+                }               
                 else
                 {
                     buffSlot.gameObject.SetActive(false);
@@ -418,6 +453,43 @@ public class UiManager : MonoBehaviour
             }
         }
     }
+
+
+
+    private void SetCompareArrow(Transform arrow, int currentValue, int compareValue)
+    {
+        if (currentValue == compareValue)
+        {
+            arrow.gameObject.SetActive(false);
+            return;
+        }
+
+        arrow.gameObject.SetActive(true);
+
+        bool isHigher = currentValue > compareValue;
+
+        var arrowImage = arrow.GetComponent<Image>();
+
+        arrowImage.color = isHigher ? optionUpColor : optionDownColor;
+
+        Vector3 scale = arrow.localScale;
+        scale.y = isHigher ? 1f : -1f;
+        arrow.localScale = scale;
+    }
+
+    private EquipmentOption FindEquipmentOption(Equipment equipment, EquipmentOptionType optionType)
+    {
+        if (equipment == null ||
+            equipment.Options == null)
+        {
+            return null;
+        }
+
+        return equipment.Options.Find(
+            option => option.OptionType == optionType
+        );
+    }
+
     private string GetOptionName(EquipmentOptionType optionType)
     {
         switch (optionType)

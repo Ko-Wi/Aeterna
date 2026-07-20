@@ -10,6 +10,8 @@ public class EquipmentSummoner : MonoBehaviour
     ForgeManager forgeManager;
     public Animator animator;
 
+    private bool isSummoning;
+
     private void Start()
     {
         myChar = MyObject.MyChar;
@@ -20,9 +22,15 @@ public class EquipmentSummoner : MonoBehaviour
 
     public void OnClickSummonButton()
     {
-        // 클릭 애니메이션 트리거 실행
-        if (animator != null)
-            animator.SetTrigger("Click");
+        // 이미 소환 애니메이션이 진행 중이면 클릭 무시
+        if (isSummoning) return;
+
+        if (animator == null) return;
+
+        isSummoning = true;
+
+        animator.ResetTrigger("Click");
+        animator.SetTrigger("Click");
     }
     /// <summary>
     /// 장비 소환 시 어떤 부위가 나올지 결정합니다.
@@ -55,21 +63,39 @@ public class EquipmentSummoner : MonoBehaviour
         int randomIndex = UnityEngine.Random.Range(0, summonParts.Length);
         return summonParts[randomIndex];
     }
+    //장비뽑기 이벤트 
+    //public void SummonEquipment()
+    //{
+    //    EquipmentSlotType summonSlot = GetRandomSummonSlot();
+
+    //    //등급 랜덤으로 뽑기
+    //    EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
+
+    //    int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);
+
+    //    AddOwnedEquipment(summonSlot, grade, equipmentIndex);
+
+    //    //Debug.Log($"뽑힌 장비 타입: {summonSlot} // {equipmentIndex} // {grade}");
+    //    uiManager.SummonUiSet();
+    //}
     public void SummonEquipment()
     {
+        // 혹시 애니메이션 이벤트가 중복 호출되어도 한 번만 처리
+        if (!isSummoning)
+            return;
+
         EquipmentSlotType summonSlot = GetRandomSummonSlot();
 
-        //등급 랜덤으로 뽑기
         EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
 
         int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);
 
         AddOwnedEquipment(summonSlot, grade, equipmentIndex);
 
-        //Debug.Log($"뽑힌 장비 타입: {summonSlot} // {equipmentIndex} // {grade}");
-
         uiManager.SummonUiSet();
 
+        // 소환 처리가 끝났으므로 다시 클릭 허용
+        isSummoning = false;
     }
 
     //장비 단조

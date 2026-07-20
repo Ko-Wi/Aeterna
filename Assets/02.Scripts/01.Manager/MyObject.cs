@@ -25,6 +25,10 @@ public class MyObject : MonoBehaviour
     /*************************************************************************************/
 
     public int ForgeLevel = 1;
+
+    public int Gold;
+    public int Diamond;
+
     [Header("¿Â∫Ò ¿Œµ¶Ω∫")]
     public PartsCategory[] categories;
 
