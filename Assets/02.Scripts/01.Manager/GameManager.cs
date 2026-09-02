@@ -25,7 +25,30 @@ public class GameManager : MonoBehaviour
 
     [Header("현재 단조 레벨 기준 장비 등급 확률")]
     public List<EquipmentGradeProbability> EquipmentGradeProbabilities = new List<EquipmentGradeProbability>();
+    
+    public Transform MonsterHP_UI;
+    public Transform Damage_UI;
 
+    //기타등등 UI생성되는 오브젝트의 부모
+    public RectTransform UI_ETC_Parent;
+    public GameObject AlertBox;
+    public GameObject AlertParent;      //안내창
+
+    [Header("Pooling")]
+    //Click Pool
+    public GameObject Click_Vfx;
+    private Queue<GameObject> clickParticlePool = new Queue<GameObject>();
+    private int poolSize = 40;
+
+    //HPBar Pool
+    public GameObject hpBarPrefab;
+    private Queue<GameObject> hpBarPool = new Queue<GameObject>();
+    public int hpBarPoolSize = 100;
+
+    //DamageFont Pool
+    public GameObject damageFontPrefab;
+    private Queue<GameObject> damageFontPool = new Queue<GameObject>();
+    public int damageFontPoolSize = 30;
 
     private void Awake()
     {
@@ -37,6 +60,8 @@ public class GameManager : MonoBehaviour
         myChar = MyObject.MyChar;
 
         RefreshEquipmentGradeProbabilities();
+
+        PoolingInit();
     }
 
     // Update is called once per frame
@@ -46,6 +71,59 @@ public class GameManager : MonoBehaviour
         {
             RefreshEquipmentGradeProbabilities();
         }
+    }
+
+    private void PoolingInit()
+    {
+        //for (int i = 0; i < poolSize; i++)
+        //{
+        //    GameObject obj = Instantiate(Click_Vfx, UI_ETC_Parent);
+        //    obj.SetActive(false);
+        //    clickParticlePool.Enqueue(obj);
+        //}
+
+        for (int i = 0; i < hpBarPoolSize; i++)
+        {
+            var obj = Instantiate(hpBarPrefab, MonsterHP_UI);
+            obj.SetActive(false);
+            hpBarPool.Enqueue(obj);
+        }
+
+        //for (int i = 0; i < damageFontPoolSize; i++)
+        //{
+        //    var obj = Instantiate(damageFontPrefab, Damage_UI);
+        //    obj.SetActive(false);
+        //    damageFontPool.Enqueue(obj);
+        //}
+    }
+
+    public GameObject GetHPBar()
+    {
+        GameObject obj;
+
+        if (hpBarPool.Count > 0)
+        {
+            obj = hpBarPool.Dequeue();
+        }
+        else
+        {
+            obj = Instantiate(hpBarPrefab, MonsterHP_UI);
+        }
+
+        obj.SetActive(true);
+        return obj;
+    }
+
+    public void ReturnHPBar(GameObject obj)
+    {
+        if (obj == null)
+            return;
+
+        obj.SetActive(false);
+        obj.transform.SetParent(MonsterHP_UI);
+        obj.transform.localPosition = Vector3.zero;
+
+        hpBarPool.Enqueue(obj);
     }
     /// <summary>
     /// 현재 myChar.ForgeLevel에 맞는 장비 등급 확률을 리스트에 갱신합니다.

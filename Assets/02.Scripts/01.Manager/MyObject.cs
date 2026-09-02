@@ -1,4 +1,5 @@
 using LayerLab.ArtMakerUnity;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,6 +30,14 @@ public class MyObject : MonoBehaviour
     public int Gold;
     public int Diamond;
 
+    [Header("스테이지")]
+    [SerializeField] private int currentMonsterCount;       // 현재 살아 있는 몬스터 수
+
+    public StageTier CurrentStageTier = StageTier.Normal;   // 현재 스테이지 등급
+    public int CurrentStage = 1;                            // 현재 등급 안의 스테이지
+    public int CurrentRound = 1;                            // 현재 스테이지의 라운드
+    public int CurrentMonsterCount => currentMonsterCount;
+
     [Header("장비 인덱스")]
     public PartsCategory[] categories;
 
@@ -56,7 +65,9 @@ public class MyObject : MonoBehaviour
     public int CostumeHelmetIndex = -1;
 
     public List<Equipment> ForgeEquipments = new List<Equipment>();
-
+    [Header("환경 설정")]
+    public bool BGMSound = false;
+    public bool EffectSound = false;
 
     //==================== 엑셀관련 =====================
     public UpgradeTemplateMgr UpgradeDataMgr;
@@ -93,6 +104,28 @@ public class MyObject : MonoBehaviour
         UpgradeDataMgr.OnDataLoad(UpgradeResource);
         string LvTierResource = "01_Excel/EquipmentLvTier";
         LvTierDataMgr.OnDataLoad(LvTierResource);
+    }
+
+    // 몬스터가 생성되었을 때 현재 몬스터 수 증가
+    public void AddMonsterCount()
+    {
+        currentMonsterCount++;
+    }
+
+    // 몬스터가 사망했을 때 현재 몬스터 수 감소
+    public void RemoveMonsterCount()
+    {
+        currentMonsterCount--;
+
+        // 몬스터 수가 음수가 되는 상황 방지
+        if (currentMonsterCount < 0)
+            currentMonsterCount = 0;
+    }
+
+    // 새로운 스테이지가 시작될 때 몬스터 수 초기화
+    public void ResetMonsterCount()
+    {
+        currentMonsterCount = 0;
     }
 }
 //[System.Serializable]

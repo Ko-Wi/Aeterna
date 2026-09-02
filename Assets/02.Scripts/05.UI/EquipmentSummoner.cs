@@ -7,10 +7,12 @@ public class EquipmentSummoner : MonoBehaviour
     MyObject myChar;
     GameManager gameManager;
     UiManager uiManager;
+    SoundManager soundManager;
     ForgeManager forgeManager;
     public Animator animator;
 
     private bool isSummoning;
+    [SerializeField] private AudioClip forgeSound;
 
     private void Start()
     {
@@ -18,6 +20,7 @@ public class EquipmentSummoner : MonoBehaviour
         gameManager = GameManager.Instance;
         uiManager = UiManager.Instance;
         forgeManager = ForgeManager.Instance;
+        soundManager = SoundManager.Instance;
     }
 
     public void OnClickSummonButton()
@@ -143,5 +146,9 @@ public class EquipmentSummoner : MonoBehaviour
         int maxIndex = minIndex + counts[gradeIndex];
 
         return UnityEngine.Random.Range(minIndex, maxIndex);
+    }
+    public void ForgeSound()
+    {
+        soundManager.SoundSfx(forgeSound);
     }
 }

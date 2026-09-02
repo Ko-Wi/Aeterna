@@ -82,6 +82,7 @@ MonoBehaviour:
   - builtinIcons: []
     customIcons:
     - Canvas Icon
+    - sv_icon_dot6_pix16_gizmo
     enabled: 1
   - builtinIcons: []
     customIcons: []

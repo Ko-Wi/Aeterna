@@ -31,6 +31,7 @@ public class UiManager : MonoBehaviour
     /*************************************************************************************/
     MyObject myChar;
 
+    [Header("============UI 포지==========")]
     //뽑힌 장비 보여주는 Panel
     public GameObject SummonEquipment;
     //장비 뽑는 UI부분
@@ -71,6 +72,8 @@ public class UiManager : MonoBehaviour
     public Color[] bgColor;
     public Color[] highLight1Color;
 
+    
+
     [SerializeField] private Color optionUpColor = Color.green;
     [SerializeField] private Color optionDownColor = Color.red;
 
@@ -86,6 +89,15 @@ public class UiManager : MonoBehaviour
         //SummonEquipmentSet();
 
         UIBasicSet();
+
+        if (myChar.ForgeEquipments.Count > 0)
+        {
+            SummonBtn.SetActive(false);
+        }
+        else
+        {
+            SummonBtn.SetActive(true);
+        }
     }
     //단조로 뽑힌 아이템UI 관련 
     public void UIBasicSet()

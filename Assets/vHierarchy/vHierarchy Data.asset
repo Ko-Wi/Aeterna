@@ -35,6 +35,9 @@ MonoBehaviour:
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-407922802-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-615669070-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1342699054-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1787684395-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-998521542-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-92627326-0
         values:
         - colorIndex: 0
           iconNameOrGuid: Camera Icon
@@ -69,7 +72,7 @@ MonoBehaviour:
           isIconRecursive: 0
           isColorRecursive: 1
         - colorIndex: 4
-          iconNameOrGuid: Folder Icon
+          iconNameOrGuid: cs Script Icon
           isIconRecursive: 0
           isColorRecursive: 1
         - colorIndex: 0
@@ -82,6 +85,18 @@ MonoBehaviour:
           isColorRecursive: 0
         - colorIndex: 0
           iconNameOrGuid: cs Script Icon
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: cs Script Icon
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: sv_icon_dot6_pix16_gizmo
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: sv_icon_dot6_pix16_gizmo
           isIconRecursive: 0
           isColorRecursive: 0
         - colorIndex: 0

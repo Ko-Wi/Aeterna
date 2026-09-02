@@ -3,23 +3,33 @@ using UnityEngine;
 public class ProjectileController : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 8f;
-    [SerializeField] private float hitDistance = 0.15f;
     [SerializeField] private float lifeTime = 3f;
 
     [SerializeField] private GameObject hiatEffect;
+
+    private Rigidbody2D __rigidbody2D;
     private MonsterController target;
+    private Vector2 lastDirection = Vector2.right;
     private int damage;
     private float timer;
+    private bool hasHit;
+
+    private void Awake()
+    {
+        __rigidbody2D = GetComponent<Rigidbody2D>();
+    }
 
     public void Init(MonsterController target, int damage)
     {
         this.target = target;
         this.damage = damage;
+
+        UpdateDirection();
     }
 
-    void Update()
+    private void FixedUpdate()
     {
-        timer += Time.deltaTime;
+        timer += Time.fixedDeltaTime;
 
         if (timer >= lifeTime)
         {
@@ -27,32 +37,48 @@ public class ProjectileController : MonoBehaviour
             return;
         }
 
-        if (target == null)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        // 타겟이 살아 있을 때만 추적 방향을 갱신한다.
+        if (target != null && target.IsTargetable)
+            UpdateDirection();
 
-        Vector3 targetPos = target.transform.position;
-        Vector3 dir = targetPos - transform.position;
+        // 타겟이 사망하거나 삭제되면 마지막 방향으로 계속 이동한다.
+        Vector2 nextPosition = __rigidbody2D.position
+            + lastDirection * moveSpeed * Time.fixedDeltaTime;
 
-        if (dir.magnitude <= hitDistance)
-        {
-            Hit();
-            return;
-        }
-
-        transform.position += dir.normalized * moveSpeed * Time.deltaTime;
+        __rigidbody2D.MovePosition(nextPosition);
     }
 
-    private void Hit()
+    private void UpdateDirection()
     {
-        if (target != null)
-        {
-            // MonsterController 쪽에 데미지 함수가 있으면 여기에 연결
-            //target.Damage(damage);
-            GameObject projectileObj = Instantiate(hiatEffect, target.transform.position, Quaternion.identity);
-        }
+        if (target == null)
+            return;
+
+        Vector2 direction = (Vector2)target.transform.position - __rigidbody2D.position;
+
+        if (direction.sqrMagnitude > 0.0001f)
+            lastDirection = direction.normalized;
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (hasHit || target == null || !target.IsTargetable)
+            return;
+
+        MonsterController monster = other.GetComponent<MonsterController>();
+
+        if (monster == null || monster != target)
+            return;
+
+        hasHit = true;
+        Hit(monster);
+    }
+
+    private void Hit(MonsterController monster)
+    {
+        if (hiatEffect != null)
+            Instantiate(hiatEffect, transform.position, Quaternion.identity);
+
+        monster.AttackHit(damage, false);
 
         Destroy(gameObject);
     }

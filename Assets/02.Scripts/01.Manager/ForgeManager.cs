@@ -153,7 +153,7 @@ public class ForgeManager : MonoBehaviour
         }
         uiManager.SummonUiSet();
     }
-    //동전 드랍효과
+    //동전 드랍효과 및 장비판매
     public void OnClickSellForgeEquipment()
     {
         Equipment sellEquipment = GetCurrentForgeEquipment();
