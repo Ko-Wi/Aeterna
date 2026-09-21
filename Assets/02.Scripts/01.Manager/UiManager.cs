@@ -1,4 +1,4 @@
-using LayerLab.ArtMakerUnity;
+ï»¿using LayerLab.ArtMakerUnity;
 using NUnit.Framework;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 public class UiManager : MonoBehaviour
 {
-    /********************************** ½Ì ±Û Åæ *******************************************/
+    /********************************** ì‹± ê¸€ í†¤ *******************************************/
 
     private static UiManager _instance;
     public static UiManager Instance
@@ -30,16 +30,16 @@ public class UiManager : MonoBehaviour
     }
     /*************************************************************************************/
     MyObject myChar;
-
-    [Header("============UI Æ÷Áö==========")]
-    //»ÌÈù Àåºñ º¸¿©ÁÖ´Â Panel
+    private SpawnManager spawnManager;
+    [Header("============UI í¬ì§€==========")]
+    //ë½‘íŒ ì¥ë¹„ ë³´ì—¬ì£¼ëŠ” Panel
     public GameObject SummonEquipment;
-    //Àåºñ »Ì´Â UIºÎºĞ
+    //ì¥ë¹„ ë½‘ëŠ” UIë¶€ë¶„
     [SerializeField] private Transform SummonPanel;
     [SerializeField] private GameObject SummonBtn;
     [SerializeField] private GameObject EquipBtn;
 
-    [Header("Àåºñ ½½·Ô")]
+    [Header("ì¥ë¹„ ìŠ¬ë¡¯")]
     public GameObject WeaponSlot;
     public GameObject HelmetSlot;
     public GameObject ChestSlot;
@@ -50,15 +50,15 @@ public class UiManager : MonoBehaviour
     public GameObject BeltSlot;
     public GameObject ShieldSlot;
 
-    [Header("Àåºñ°ü·Ã ¾ÆÀÌÄÜ ÀÌ¹ÌÁö")]
-    [Header("===========¹«±â===========")]
+    [Header("ì¥ë¹„ê´€ë ¨ ì•„ì´ì½˜ ì´ë¯¸ì§€")]
+    [Header("===========ë¬´ê¸°===========")]
     public List<Sprite> axeIcon;
     public List<Sprite> bluntIcon;
     public List<Sprite> spearIcon;
     public List<Sprite> staffIcon;
     public List<Sprite> swordIcon;
     public List<Sprite> wandIcon;
-    [Header("===========¹æ¾î±¸===========")]
+    [Header("===========ë°©ì–´êµ¬===========")]
     public List<Sprite> chestIcon;
     public List<Sprite> helmetIcon;
     public List<Sprite> pantsIcon;
@@ -68,7 +68,43 @@ public class UiManager : MonoBehaviour
     public List<Sprite> beltIcon;
     public List<Sprite> shieldIcon;
 
-    [Header("============µî±Ş »ö»ó==========")]
+    [Header("===========ë©”ì¸ ì „íˆ¬ UI===========")]
+    public TMP_Text WaveText;
+    public TMP_Text RoundText;
+    public TMP_Text StageText;
+    public TMP_Text BossTimerText;
+    public GameObject StageCntBar;
+    public GameObject BossHpBar;
+
+    // UI ì»´í¬ë„ŒíŠ¸ëŠ” ì‹œì‘í•  ë•Œ í•œ ë²ˆë§Œ ì°¾ì•„ ë³´ê´€
+    [SerializeField] private Slider stageCountSlider;
+    [SerializeField] private Slider bossHealthSlider;
+    [SerializeField] private Slider bossTimerSlider;
+    [SerializeField] private TMP_Text stageCountText;
+    [SerializeField] private TMP_Text bossHealthText;
+
+    // ì†Œí™˜ëœ ë³´ìŠ¤ë¥¼ ì§ì ‘ ì°¸ì¡°
+    private MonsterController currentBoss;
+    private uint currentBossSpawnVersion;
+
+    // ê°’ì´ ë°”ë€” ë•Œë§Œ í…ìŠ¤íŠ¸ë¥¼ ê°±ì‹ í•˜ê¸° ìœ„í•œ ì´ì „ ê°’
+    private int displayedWave = -1;
+    private int displayedRound = -1;
+    private int displayedStage = -1;
+    private StageTier displayedTier = (StageTier)(-1);
+
+    private int displayedMonsterCount = -1;
+    private int displayedMaxEnemyCount = -1;
+
+    private double displayedBossHp = double.NaN;
+    private double displayedBossMaxHp = double.NaN;
+
+    // ì´ë²ˆ ë³´ìŠ¤ê°€ ë“±ì¥í–ˆì„ ë•Œ í™•ì •ëœ ì œí•œ ì‹œê°„
+    private float bossTime; // ì´ë²ˆ ë³´ìŠ¤ì „ì˜ ë‚¨ì€ ì‹œê°„
+    private bool bossTimerRunning = false;
+    private int displayedBossSeconds = -1;
+
+    [Header("============ë“±ê¸‰ ìƒ‰ìƒ==========")]
     public Color[] bgColor;
     public Color[] highLight1Color;
 
@@ -81,6 +117,7 @@ public class UiManager : MonoBehaviour
     void Start()
     {
         myChar = MyObject.MyChar;
+        spawnManager = SpawnManager.Instance;
     }
 
     // Update is called once per frame
@@ -99,7 +136,229 @@ public class UiManager : MonoBehaviour
             SummonBtn.SetActive(true);
         }
     }
-    //´ÜÁ¶·Î »ÌÈù ¾ÆÀÌÅÛUI °ü·Ã 
+    private void LateUpdate()
+    {
+        // ì‹œê°„ ì´ˆê³¼ ì²˜ë¦¬ë¥¼ ë¨¼ì € ì‹¤í–‰
+        UpdateBossTimer();
+
+        // ì „íˆ¬ ì§„í–‰ ê°’ê³¼ ì €ì¥ëœ ë³´ìŠ¤ ì°¸ì¡°ë¥¼ ì½ì–´ UI ê°±ì‹ 
+        StageUISet();       
+    }
+
+    //ëª¬ìŠ¤í„° ë° ìŠ¤í…Œì´ì§€ ê´€ë ¨ í‘œì‹œ UI
+    public void StageUISet()
+    {
+        if (myChar == null)
+            return;
+
+        // ì›¨ì´ë¸Œ: Wave 12/30
+        if (displayedWave != myChar.CurrentWave)
+        {
+            displayedWave = myChar.CurrentWave;
+
+            WaveText.text = $"Wave {displayedWave}/30";
+        }
+
+        // ë¼ìš´ë“œ: ë‚¨ì€ ì†Œí™˜ íšŸìˆ˜ í‘œì‹œ
+        if (displayedRound != myChar.CurrentRound)
+        {
+            displayedRound = myChar.CurrentRound;
+
+            RoundText.text = displayedRound.ToString();
+        }
+
+        // ìŠ¤í…Œì´ì§€ ë˜ëŠ” ë“±ê¸‰ì´ ë°”ë€Œì—ˆì„ ë•Œ í‘œì‹œ ê°±ì‹ 
+        if (displayedStage != myChar.CurrentStage || displayedTier != myChar.CurrentStageTier)
+        {
+            displayedStage = myChar.CurrentStage;
+            displayedTier = myChar.CurrentStageTier;
+
+            StageText.text = $"{GetStageTierText(displayedTier)} - Stage.{displayedStage}";
+        }
+
+        // ë³´ìŠ¤ê°€ ì‚´ì•„ ìˆê³ , ë“±ë¡ ë‹¹ì‹œì™€ ê°™ì€ ì†Œí™˜ ê°œì²´ì¸ì§€ í™•ì¸
+        bool hasBoss = currentBoss != null && currentBoss.SpawnVersion == currentBossSpawnVersion 
+            && currentBoss._enemyCategory == EnemyCategory.Boss && currentBoss.IsTargetable;
+
+        // ëª¬ìŠ¤í„° Cnt & ë³´ìŠ¤ UI ì¤‘ í•˜ë‚˜ë§Œ í‘œì‹œ
+        if (StageCntBar != null && StageCntBar.activeSelf != !hasBoss)
+            StageCntBar.SetActive(!hasBoss);
+
+        if (BossHpBar != null && BossHpBar.activeSelf != hasBoss)
+            BossHpBar.SetActive(hasBoss);
+
+        if (hasBoss)
+        {
+            RefreshBossHealth();
+        }
+        else
+        {
+            // ì‚¬ë§í•˜ê±°ë‚˜ íšŒìˆ˜ëœ ë³´ìŠ¤ ì°¸ì¡° í•´ì œ
+            currentBoss = null;
+            RefreshMonsterCount();
+        }
+    }
+    private string GetStageTierText(StageTier tier)
+    {
+        switch (tier)
+        {
+            case StageTier.Normal:
+                return "ë…¸ë©€";
+
+            case StageTier.Heroic:
+                return "ì˜ì›…";
+
+            case StageTier.Demigod:
+                return "ë°˜ì‹ ";
+
+            case StageTier.Titan:
+                return "íƒ€ì´íƒ„";
+
+            default:
+                return tier.ToString();
+        }
+    }
+
+    // í˜„ì¬ ëª¬ìŠ¤í„° ìˆ˜ / ìµœëŒ€ ëª¬ìŠ¤í„° ìˆ˜ í‘œì‹œ
+    private void RefreshMonsterCount()
+    {
+        int count = myChar.CurrentMonsterCount;
+        int maximum = myChar.MaxEnemyCnt;
+
+        if (displayedMonsterCount == count &&
+            displayedMaxEnemyCount == maximum)
+        {
+            return;
+        }
+
+        displayedMonsterCount = count;
+        displayedMaxEnemyCount = maximum;
+
+        if (stageCountSlider != null)
+        {
+            stageCountSlider.value = maximum > 0
+                ? Mathf.Clamp01((float)count / maximum)
+                : 0f;
+        }
+
+        if (stageCountText != null)
+            stageCountText.text = $"{count} / {maximum}";
+    }
+
+    // ì €ì¥ëœ ë³´ìŠ¤ ì°¸ì¡°ì—ì„œ ì²´ë ¥ì„ ì½ìŒ â€” ëª¬ìŠ¤í„° ê²€ìƒ‰ ì—†ìŒ
+    private void RefreshBossHealth()
+    {
+        double hp = System.Math.Max(0d, currentBoss.currentHp);
+        double maximum = currentBoss.maxHp;
+
+        if (displayedBossHp == hp &&
+            displayedBossMaxHp == maximum)
+        {
+            return;
+        }
+
+        displayedBossHp = hp;
+        displayedBossMaxHp = maximum;
+
+        if (bossHealthSlider != null)
+        {
+            bossHealthSlider.value = maximum > 0d
+                ? Mathf.Clamp01((float)(hp / maximum))
+                : 0f;
+        }
+
+        if (bossHealthText != null)
+            bossHealthText.text = $"{hp:0} / {maximum:0}";
+    }
+
+    // ë³´ìŠ¤ ì†Œí™˜ì´ ì™„ë£Œëœ ì§í›„ í•œ ë²ˆ í˜¸ì¶œ
+    public void RegisterBoss(MonsterController boss)
+    {
+        currentBoss = boss;
+        currentBossSpawnVersion = boss != null ? boss.SpawnVersion : 0;
+
+        // ìƒˆ ë³´ìŠ¤ëŠ” ì²´ë ¥ì´ ì´ì „ ë³´ìŠ¤ì™€ ê°™ì•„ë„ ë‹¤ì‹œ í‘œì‹œ
+        displayedBossHp = double.NaN;
+        displayedBossMaxHp = double.NaN;
+
+        // ë§ˆìŠ¤í„°ë¦¬ê°€ ë°˜ì˜ëœ ì œí•œ ì‹œê°„ì„ ê°€ì ¸ì˜´
+        bossTime = myChar.BossTimeLimit;
+
+        bossTimerRunning = boss != null && boss.IsTargetable;
+
+        if (bossTimerSlider != null)
+        {
+            bossTimerSlider.minValue = 0f;
+            bossTimerSlider.maxValue = 1f;
+            bossTimerSlider.wholeNumbers = false;
+        }
+
+        // ë“±ì¥ ì§í›„ 60ì´ˆì™€ ê°€ë“ ì°¬ íƒ€ì´ë¨¸ í‘œì‹œ
+        RefreshBossTimer(bossTimerRunning ? myChar.BossTimeLimit : 0f);
+    }
+    private void UpdateBossTimer()
+    {
+        if (!bossTimerRunning)
+            return;
+
+        // ë³´ìŠ¤ê°€ ì£½ê±°ë‚˜ íšŒìˆ˜ëê±°ë‚˜ ë‹¤ë¥¸ ìƒì• ë¡œ ì¬ì‚¬ìš©ëë‹¤ë©´ ì¢…ë£Œ
+        // ì´ ê²½ìš°ì—ëŠ” ìŠ¤í…Œì´ì§€ í›„í‡´ë¥¼ ì‹¤í–‰í•˜ì§€ ì•ŠìŒ
+        if (currentBoss == null || currentBoss.SpawnVersion != currentBossSpawnVersion || !currentBoss.IsTargetable)
+        {
+            bossTimerRunning = false;
+            return;
+        }
+
+        bossTime = Mathf.Max(0f, bossTime - Time.deltaTime);
+
+        RefreshBossTimer(bossTime);
+
+        if (bossTime > 0f)
+            return;
+
+        // í›„í‡´ ì²˜ë¦¬ê°€ ì—¬ëŸ¬ ë²ˆ ì‹¤í–‰ë˜ì§€ ì•Šë„ë¡ ë¨¼ì € ì¢…ë£Œ
+        bossTimerRunning = false;
+
+        if (spawnManager == null)
+        {
+            Debug.LogError("UiManagerì˜ SpawnManager ì°¸ì¡°ë¥¼ ì—°ê²°í•´ì£¼ì„¸ìš”.", this);
+            return;
+        }
+
+        // ì‹œê°„ ì´ˆê³¼ ì‹œì ì— ì‚´ì•„ ìˆëŠ” ë³´ìŠ¤ ì •ë³´ë¥¼ ì „ë‹¬
+        spawnManager.HandleBossTimeout(currentBoss, currentBossSpawnVersion);
+
+        currentBoss = null;
+    }
+
+    private void RefreshBossTimer(float remainingTime)
+    {
+        if (bossTimerSlider != null)
+        {
+            // 60ì´ˆì¼ ë•Œ 1, 0ì´ˆì¼ ë•Œ 0
+            bossTimerSlider.value = remainingTime / myChar.BossTimeLimit;
+        }
+
+        // 59.8ì´ˆëŠ” 60ìœ¼ë¡œ í‘œì‹œí•˜ê³ , 0ì´ˆê°€ ë˜ë©´ 0ìœ¼ë¡œ í‘œì‹œ
+        int seconds = Mathf.CeilToInt(remainingTime);
+
+        if (displayedBossSeconds == seconds)
+            return;
+
+        displayedBossSeconds = seconds;
+
+        BossTimerText.text = $"{seconds}ì´ˆ";
+    }
+
+    public void ClearBoss()
+    {
+        bossTimerRunning = false;
+        currentBoss = null;
+        currentBossSpawnVersion = 0;
+
+        RefreshBossTimer(0f);
+    }
+    //ë‹¨ì¡°ë¡œ ë½‘íŒ ì•„ì´í…œUI ê´€ë ¨ 
     public void UIBasicSet()
     {
         bool isEquipBtn = myChar.ForgeEquipments.Count > 0;
@@ -130,7 +389,7 @@ public class UiManager : MonoBehaviour
         }
     }
 
-    //ÀåÂøÁßÀÎ Àåºñ UI°ü·Ã
+    //ì¥ì°©ì¤‘ì¸ ì¥ë¹„ UIê´€ë ¨
     public void EquippedSlotSet(Equipment equipment)
     {
         GameObject selectSlot = null;
@@ -187,7 +446,7 @@ public class UiManager : MonoBehaviour
         IconUISet(selectSlot.transform, currentEquipment, EquipmentIconSet(currentEquipment));
 
     }
-    //Âø¿ëÀåºñ Ã¢À» ´©¸£¸é Àåºñ Á¤º¸¸¦ º¸¿©ÁÖ±âÀ§ÇÔ[Onclick]
+    //ì°©ìš©ì¥ë¹„ ì°½ì„ ëˆ„ë¥´ë©´ ì¥ë¹„ ì •ë³´ë¥¼ ë³´ì—¬ì£¼ê¸°ìœ„í•¨[Onclick]
     public void ShowEquippedEquipmentInfo(int SlotIndex)
     {
         Equipment equipment = null;
@@ -232,7 +491,7 @@ public class UiManager : MonoBehaviour
 
     }
 
-    //Àåºñ »Ì±â ¹öÆ°Å¬¸¯ÇßÀ»¶§ Ui¶ç¿öÁÖ´Â ºÎºĞ
+    //ì¥ë¹„ ë½‘ê¸° ë²„íŠ¼í´ë¦­í–ˆì„ë•Œ Uië„ì›Œì£¼ëŠ” ë¶€ë¶„
     public void SummonUiSet()
     {
         int equipmentCount = myChar.ForgeEquipments.Count;
@@ -270,29 +529,29 @@ public class UiManager : MonoBehaviour
         SummonEquipmentSet();
     }
 
-    //¼±ÅÃµÈÀåºñ Á¤º¸¸¦ UI¿¡ ±×·ÁÁÖ´Â ºÎºĞ
+    //ì„ íƒëœì¥ë¹„ ì •ë³´ë¥¼ UIì— ê·¸ë ¤ì£¼ëŠ” ë¶€ë¶„
     public void SummonEquipmentSet()
     {
-        // ´ÜÁ¶ °á°ú Àåºñ°¡ ¾øÀ¸¸é ½ÇÇà ¾È ÇÔ
+        // ë‹¨ì¡° ê²°ê³¼ ì¥ë¹„ê°€ ì—†ìœ¼ë©´ ì‹¤í–‰ ì•ˆ í•¨
         if (myChar.ForgeEquipments == null || myChar.ForgeEquipments.Count <= 0)
             return;
 
-        // ÇöÀç À¯Àú¿¡°Ô º¸¿©ÁÙ Àåºñ = ¸¶Áö¸·À¸·Î »ÌÈù Àåºñ
+        // í˜„ì¬ ìœ ì €ì—ê²Œ ë³´ì—¬ì¤„ ì¥ë¹„ = ë§ˆì§€ë§‰ìœ¼ë¡œ ë½‘íŒ ì¥ë¹„
         var selectEquipment = myChar.ForgeEquipments[myChar.ForgeEquipments.Count - 1];
 
-        // ÇöÀç »ÌÈù Àåºñ¿Í °°Àº ½½·Ô¿¡ ÀåÂø ÁßÀÎ Àåºñ °¡Á®¿À±â
+        // í˜„ì¬ ë½‘íŒ ì¥ë¹„ì™€ ê°™ì€ ìŠ¬ë¡¯ì— ì¥ì°© ì¤‘ì¸ ì¥ë¹„ ê°€ì ¸ì˜¤ê¸°
         Equipment equippedEquipment = GetEquippedEquipmentBySlot(selectEquipment.SlotType);
 
-        // ÀåÂø ÁßÀÎ Àåºñ°¡ À¯È¿ÇÑ ÀåºñÀÎÁö Ã¼Å©
+        // ì¥ì°© ì¤‘ì¸ ì¥ë¹„ê°€ ìœ íš¨í•œ ì¥ë¹„ì¸ì§€ ì²´í¬
         bool usedEquipment = IsEquipmentValid(equippedEquipment);
 
-        // Âø¿ë ÁßÀÎ Àåºñ ÆË¾÷
+        // ì°©ìš© ì¤‘ì¸ ì¥ë¹„ íŒì—…
         var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
 
-        // ÀåÂø ÁßÀÎ Àåºñ°¡ ÀÖÀ¸¸é ÄÑ°í, ¾øÀ¸¸é ²û
+        // ì¥ì°© ì¤‘ì¸ ì¥ë¹„ê°€ ìˆìœ¼ë©´ ì¼œê³ , ì—†ìœ¼ë©´ ë”
         popupEquipped.gameObject.SetActive(usedEquipment);
 
-        // ÀåÂø ÁßÀÎ Àåºñ°¡ ÀÖÀ¸¸é Popup_Equipped UI¿¡ µ¥ÀÌÅÍ Ç¥½Ã
+        // ì¥ì°© ì¤‘ì¸ ì¥ë¹„ê°€ ìˆìœ¼ë©´ Popup_Equipped UIì— ë°ì´í„° í‘œì‹œ
         if (usedEquipment)
         {
             EquippedUiSet(equippedEquipment, selectEquipment);
@@ -300,7 +559,7 @@ public class UiManager : MonoBehaviour
         
     }
 
-    // ÇöÀç »ÌÈù Àåºñ SlotType ±âÁØÀ¸·Î °°Àº ºÎÀ§ÀÇ Âø¿ë Àåºñ °¡Á®¿À±â
+    // í˜„ì¬ ë½‘íŒ ì¥ë¹„ SlotType ê¸°ì¤€ìœ¼ë¡œ ê°™ì€ ë¶€ìœ„ì˜ ì°©ìš© ì¥ë¹„ ê°€ì ¸ì˜¤ê¸°
     private Equipment GetEquippedEquipmentBySlot(EquipmentSlotType slotType)
     {
         switch (slotType)
@@ -338,13 +597,13 @@ public class UiManager : MonoBehaviour
         }
     }
 
-    // ÀåÂø Àåºñ°¡ ½ÇÁ¦ À¯È¿ÇÑ ÀåºñÀÎÁö Ã¼Å©
+    // ì¥ì°© ì¥ë¹„ê°€ ì‹¤ì œ ìœ íš¨í•œ ì¥ë¹„ì¸ì§€ ì²´í¬
     private bool IsEquipmentValid(Equipment equipment)
     {
         return equipment != null && equipment.IsValid();
     }
 
-    // Âø¿ë ÁßÀÎ Àåºñ UIÃ¢¿¡ º¸¿©ÁÖ´Â ºÎºĞ[ÀåÂøÁß]
+    // ì°©ìš© ì¤‘ì¸ ì¥ë¹„ UIì°½ì— ë³´ì—¬ì£¼ëŠ” ë¶€ë¶„[ì¥ì°©ì¤‘]
     private void EquippedUiSet(Equipment currentEquipment, Equipment newEquipment)
     {
         var popupEquipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Equipped");
@@ -364,13 +623,13 @@ public class UiManager : MonoBehaviour
         IconUISet(icon, currentEquipment, EquipmentIconSet(currentEquipment));
 
         title_Text.text = currentEquipment.Grade.ToString();
-        itemName_Text.text = "ÀåÂø ÁßÀÎ ¾ÆÀÌÅÛ";
-        gearStats_Text.text = "Àåºñ ´É·ÂÄ¡";
-        usedTitle_Text.text = "Âø¿ëÁß";
+        itemName_Text.text = "ì¥ì°© ì¤‘ì¸ ì•„ì´í…œ";
+        gearStats_Text.text = "ì¥ë¹„ ëŠ¥ë ¥ì¹˜";
+        usedTitle_Text.text = "ì°©ìš©ì¤‘";
         EquipmentOption(group_Buff, currentEquipment, newEquipment);
     }
 
-    //ºñÂø¿ëÁßÀÎ Àåºñ UIÃ¢¿¡ º¸¿©ÁÖ´Â ºÎºĞ[Àåºñ»Ì±â]
+    //ë¹„ì°©ìš©ì¤‘ì¸ ì¥ë¹„ UIì°½ì— ë³´ì—¬ì£¼ëŠ” ë¶€ë¶„[ì¥ë¹„ë½‘ê¸°]
     public void UnEquippedUiSet(Equipment currentEquipment, Equipment newEquipment)
     {
         var popupUnequipped = SummonEquipment.transform.Find("EquipmentPanel").Find("Popup_Unequipped");
@@ -391,9 +650,9 @@ public class UiManager : MonoBehaviour
         IconUISet(icon, currentEquipment, EquipmentIconSet(currentEquipment));
 
         title_Text.text = currentEquipment.Grade.ToString();
-        itemName_Text.text = "¾ÆÀÌÅÛ ÀÌ¸§";
-        gearStats_Text.text = "Àåºñ ´É·ÂÄ¡";
-        //equipment´Â »ÌÈù ¾ÆÀÌÅÛ
+        itemName_Text.text = "ì•„ì´í…œ ì´ë¦„";
+        gearStats_Text.text = "ì¥ë¹„ ëŠ¥ë ¥ì¹˜";
+        //equipmentëŠ” ë½‘íŒ ì•„ì´í…œ
         EquipmentOption(group_Buff, currentEquipment, newEquipment);
     }
     private void EquipmentOption(Transform group_Buff, Equipment currentEquipment, Equipment newEquipment)
@@ -411,13 +670,13 @@ public class UiManager : MonoBehaviour
                 switch (currentEquipment.MainStatusType)
                 {
                     case EquipmentStatusType.Attack:
-                        optionName.text = "°ø°İ·Â";
+                        optionName.text = "ê³µê²©ë ¥";
                         break;
                     case EquipmentStatusType.Defense:
-                        optionName.text = "¹æ¾î·Â";
+                        optionName.text = "ë°©ì–´ë ¥";
                         break;
                     case EquipmentStatusType.Hp:
-                        optionName.text = "Ã¼·Â";
+                        optionName.text = "ì²´ë ¥";
                         break;
                 }
                 optionValue.text = $"{currentEquipment.MainStatusValue}";
@@ -507,29 +766,29 @@ public class UiManager : MonoBehaviour
         switch (optionType)
         {
             case EquipmentOptionType.CriticalRate:
-                return "Å©¸®Æ¼ÄÃ È®·ü";
+                return "í¬ë¦¬í‹°ì»¬ í™•ë¥ ";
             case EquipmentOptionType.CriticalDamage:
-                return "Å©¸®Æ¼ÄÃ µ¥¹ÌÁö";
+                return "í¬ë¦¬í‹°ì»¬ ë°ë¯¸ì§€";
             case EquipmentOptionType.BlockRate:
-                return "¹æ¾î È®·ü";
+                return "ë°©ì–´ í™•ë¥ ";
             case EquipmentOptionType.LifeSteal:
-                return "»ı¸í·Â Èí¼ö";
+                return "ìƒëª…ë ¥ í¡ìˆ˜";
             case EquipmentOptionType.DoubleAttack:
-                return "´õºí ¾îÅÃ";
+                return "ë”ë¸” ì–´íƒ";
             case EquipmentOptionType.Damage:
-                return "°ø°İ·Â";
+                return "ê³µê²©ë ¥";
             case EquipmentOptionType.ASPD:
-                return "°ø°İ¼Óµµ";
+                return "ê³µê²©ì†ë„";
             case EquipmentOptionType.SkillCoolTime:
-                return "½ºÅ³ ÄğÅ¸ÀÓ";
+                return "ìŠ¤í‚¬ ì¿¨íƒ€ì„";
             case EquipmentOptionType.MultiShot:
-                return "´ÙÁß °ø°İ";
+                return "ë‹¤ì¤‘ ê³µê²©";
             default:
                 return "";
         }
     }
 
-    //ÀåºñSummonEquipment Ã¢ÀÌ ¿­¸±¶§ ¼±ÅÃµÈ ÀåºñÀÇ TitleÀÇ ¹è°æ ¿É¼Ç»ö»ó º¯°æÇØÁÖ´Â ºÎºĞ
+    //ì¥ë¹„SummonEquipment ì°½ì´ ì—´ë¦´ë•Œ ì„ íƒëœ ì¥ë¹„ì˜ Titleì˜ ë°°ê²½ ì˜µì…˜ìƒ‰ìƒ ë³€ê²½í•´ì£¼ëŠ” ë¶€ë¶„
     private void TitleGradeColorSet(Transform title, EquipmentGrade grade)
     {
         var bg = title.Find("Bg").GetComponent<Image>();

@@ -4051,6 +4051,10 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9132585389836897359, guid: b6ca14790f5b54b7ca6f4204777c2311, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -8.9835205
+      objectReference: {fileID: 0}
     - target: {fileID: 9132585391508781582, guid: b6ca14790f5b54b7ca6f4204777c2311, type: 3}
       propertyPath: m_Name
       value: Popup_Box_04_Bag

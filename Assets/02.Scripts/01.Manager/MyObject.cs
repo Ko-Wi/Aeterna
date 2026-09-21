@@ -29,13 +29,17 @@ public class MyObject : MonoBehaviour
 
     public int Gold;
     public int Diamond;
+    public int Orihalcon;
 
     [Header("스테이지")]
-    [SerializeField] private int currentMonsterCount;       // 현재 살아 있는 몬스터 수
+    [SerializeField] private int currentMonsterCount;           // 현재 살아 있는 몬스터 수
 
-    public StageTier CurrentStageTier = StageTier.Normal;   // 현재 스테이지 등급
-    public int CurrentStage = 1;                            // 현재 등급 안의 스테이지
-    public int CurrentRound = 1;                            // 현재 스테이지의 라운드
+    public StageTier CurrentStageTier = StageTier.Normal;       // 현재 스테이지 등급
+    public int CurrentStage = 1;                                // 현재 등급 안의 스테이지
+    public int CurrentWave = 1;                                 // 현재 스테이지의 웨이브
+    public int CurrentRound = 20;                               // 현재 스테이지의 라운드
+    public int MaxEnemyCnt = 60;                                // 최대 소환 가능 몬스터 수
+    public float BossTimeLimit = 60f;                                // 최대 소환 가능 몬스터 수
     public int CurrentMonsterCount => currentMonsterCount;
 
     [Header("장비 인덱스")]

@@ -1,5 +1,6 @@
 using System.Collections;
 using UnityEngine;
+using PathologicalGames;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -11,7 +12,31 @@ public class SpawnManager : MonoBehaviour
         public int spawnPointIndex;         // 이동을 시작할 경로 지점
     }
 
+    /********************************** 싱 글 톤 *******************************************/
+
+    private static SpawnManager _instance;
+    public static SpawnManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = FindAnyObjectByType<SpawnManager>();
+
+                if (_instance == null)
+                {
+                    Debug.LogError("SpawnManager instance is null. Please ensure an instance of UIManager is present in the scene.");
+                }
+            }
+            return _instance;
+        }
+    }
+    /*************************************************************************************/
+
     private MyObject myChar;
+    private UiManager uiManger;
+    // 일반 몬스터와 보스를 관리하는 풀
+    private SpawnPool monsterPool;
 
     [Header("스테이지 등급별 몬스터 데이터")]
 
@@ -29,8 +54,12 @@ public class SpawnManager : MonoBehaviour
     // 한 스테이지에서 사용할 일반 몬스터 종류 수
     [SerializeField, Min(1)] private int monsterKindsPerStage = 2;
 
-    // 한 스테이지의 전체 라운드 수
-    [SerializeField, Min(1)] private int totalRoundCount = 30;
+    private const int RoundsPerWave = 20; // 웨이브당 소환 횟수
+    private const int LastWave = 30;      // 마지막 웨이브
+
+    private Coroutine spawnCoroutine;   // 실행 중인 소환 코루틴
+    private bool isSpawning;             // 일반 몬스터 소환 진행 여부
+    private bool bossSpawnAttempted;     // 보스 중복 소환 방지
 
     [Header("자동 소환 설정")]
 
@@ -41,10 +70,20 @@ public class SpawnManager : MonoBehaviour
     [SerializeField] private float normalMonsterScale = 0.2f; // 일반 몬스터 크기
     [SerializeField] private float bossMonsterScale = 0.4f;   // 보스 몬스터 크기
 
+
+    [Header("소환 지점 확장")]
+    [SerializeField, Min(1)] private int twoPointStartStage = 10;
+    [SerializeField, Min(1)] private int threePointStartStage = 50;
+
+
+    // 해당 몬스터의 풀을 처음 준비하거나 보충할 때 생성할 개수
+    private const int PoolBatchSize = 10;
+
     private void Awake()
     {
         // 스테이지와 현재 몬스터 수를 관리하는 myChar 가져오기
         myChar = MyObject.MyChar;
+        uiManger = UiManager.Instance;
     }
 
     private void Start()
@@ -53,79 +92,202 @@ public class SpawnManager : MonoBehaviour
         myChar.ResetMonsterCount();
 
         // 몬스터 자동 소환 시작
-        StartCoroutine(AutoSpawn());
+        StartSpawning();
     }
 
+    // 최초 시작 또는 스테이지 진행을 다시 시작할 때 호출
+    public void StartSpawning()
+    {
+        // 기존 코루틴이 있으면 중지하여 중복 소환 방지
+        StopSpawning();
+
+        if (myChar.CurrentWave < 1 || myChar.CurrentWave > LastWave)
+        {
+            Debug.LogError($"현재 웨이브가 잘못되었습니다: {myChar.CurrentWave}", this);
+            return;
+        }
+
+        // 저장된 웨이브는 유지하고 해당 스테이지의 소환 횟수로 초기화
+        myChar.CurrentRound = GetRoundsPerWave();
+
+        bossSpawnAttempted = false;
+        isSpawning = true;
+
+        spawnCoroutine = StartCoroutine(AutoSpawn());
+    }
+    public void StopSpawning()
+    {
+        isSpawning = false;
+
+        if (spawnCoroutine != null)
+        {
+            StopCoroutine(spawnCoroutine);
+            spawnCoroutine = null;
+        }
+    }
+
+    private void OnDisable()
+    {
+        // 매니저가 비활성화되면 자동 소환 중지
+        StopSpawning();
+    }
+
+    // 몬스터 풀이 없으면 생성
+    private void CreateMonsterPool()
+    {
+        if (monsterPool != null)
+            return;
+
+        // 이미 생성된 풀이 있으면 재사용
+        if (PoolManager.Pools.ContainsKey("MonsterPool"))
+        {
+            monsterPool = PoolManager.Pools["MonsterPool"];
+            return;
+        }
+
+        monsterPool = PoolManager.Pools.Create("MonsterPool");
+
+        // 기존 몬스터 부모 아래에 풀 배치
+        monsterPool.group.SetParent(monsterParent != null ? monsterParent : transform, false);
+    }
 
     // 현재 스테이지 등급에 맞는 일반 몬스터를 모든 소환 지점에 생성
     public void SpawnAll()
     {
-        // 현재 스테이지와 라운드에 해당하는 일반 몬스터 가져오기
-        GameObject currentMonsterPrefab = GetCurrentMonsterPrefab();
-
-        // 일반 몬스터 또는 소환 데이터가 없다면 소환하지 않음
-        if (currentMonsterPrefab == null || spawnDatas == null)
+        if (!isSpawning || bossSpawnAttempted || myChar.CurrentRound <= 0)
             return;
 
-        // 일반 몬스터 크기 0.2를 적용해서 소환
-        SpawnMonsters(currentMonsterPrefab, normalMonsterScale, false);
+        GameObject prefab = GetCurrentMonsterPrefab();
+
+        // 소환 묶음이 성공한 경우에만 라운드 감소
+        if (!SpawnMonsters(prefab, normalMonsterScale, false))
+        {
+            isSpawning = false;
+
+            Debug.LogError("일반 몬스터 소환 실패로 자동 소환을 중지합니다.", this);
+            return;
+        }
+
+
+        // 이번 소환으로 최대 몬스터 수를 초과했는지 확인
+        if (myChar.CurrentMonsterCount > myChar.MaxEnemyCnt)
+        {
+            RetreatStage();
+            return; // 후퇴 후 기존 소환 처리가 이어지지 않도록 종료
+        }
+
+        // 정상적으로 소환했다면 라운드 감소
+        myChar.CurrentRound--;
+
+        if (myChar.CurrentRound > 0) 
+            return;
+
+        if (myChar.CurrentWave < LastWave)
+        {
+            // 다음 웨이브 시작
+            myChar.CurrentWave++;
+            myChar.CurrentRound = GetRoundsPerWave();
+        }
+        else
+        {
+            // 30웨이브의 마지막 소환을 완료하면 보스 소환
+            SpawnBoss();
+        }
     }
 
     // 현재 스테이지에 해당하는 보스를 기존 소환 지점마다 생성
     public void SpawnBoss()
     {
-        // 현재 스테이지에 해당하는 보스 가져오기
-        GameObject currentBossPrefab = GetCurrentBossPrefab();
-
-        // 보스 또는 소환 데이터가 없다면 소환하지 않음
-        if (currentBossPrefab == null || spawnDatas == null)
+        // 중복 호출 방지
+        if (bossSpawnAttempted)
             return;
 
-        // 보스 크기 0.4를 적용해서 소환
-        SpawnMonsters(currentBossPrefab, bossMonsterScale, true);
+        // 마지막 웨이브의 일반 몬스터 소환이 끝난 경우만 허용
+        if (myChar.CurrentWave != LastWave ||
+            myChar.CurrentRound != 0)
+        {
+            return;
+        }
+
+        bossSpawnAttempted = true;
+        isSpawning = false;
+
+        GameObject prefab = GetCurrentBossPrefab();
+
+        if (!SpawnMonsters(prefab, bossMonsterScale, true))
+        {
+            Debug.LogError("보스 소환에 실패했습니다.", this);
+        }
+
+        // 웨이브 30, 라운드 0을 유지한 채 자동 소환 종료
     }
 
     // 전달받은 프리팹을 기존 spawnDatas의 위치와 경로에 맞춰 생성
-    private void SpawnMonsters(GameObject monsterPrefab, float monsterScale, bool isBoss)
+    private bool SpawnMonsters(GameObject monsterPrefab, float monsterScale, bool isBoss)
     {
-        for (int i = 0; i < spawnDatas.Length; i++)
+        if (monsterPrefab == null || spawnDatas == null)
+            return false;
+
+        if (monsterPrefab.GetComponent<MonsterController>() == null)
         {
-            // 소환 위치 또는 이동 경로가 없는 데이터는 건너뜀
-            if (spawnDatas[i].spawnPoint == null || spawnDatas[i].pathRoute == null)
-                continue;
+            Debug.LogError($"{monsterPrefab.name}에 MonsterController가 없습니다.", this);
+            return false;
+        }
 
-            // 전달받은 일반 몬스터 또는 보스 프리팹 생성
-            GameObject monster = Instantiate(monsterPrefab, spawnDatas[i].spawnPoint.position, Quaternion.identity);
+        // 보스는 첫 번째 소환 지점에서 한 마리만 소환
+        // 일반 몬스터는 스테이지에 따라 여러 지점 사용
+        int pointCount = isBoss ? Mathf.Min(1, spawnDatas.Length) : GetActiveSpawnPointCount();
 
-            // 생성된 몬스터를 기존 몬스터 부모 아래로 이동
-            monster.transform.SetParent(monsterParent);
+        if (pointCount == 0)
+            return false;
 
-            // 일반 몬스터는 0.2, 보스는 0.4 크기 적용
-            monster.transform.localScale = Vector3.one * monsterScale;
+        // 소환 전에 사용할 지점을 모두 검사
+        for (int i = 0; i < pointCount; i++)
+        {
+            SpawnData data = spawnDatas[i];
 
-            // 생성된 몬스터의 MonsterController 가져오기
+            if (data == null || data.spawnPoint == null || data.pathRoute == null || data.pathRoute.PointCount == 0)
+            {
+                Debug.LogError($"소환 지점 {i + 1}의 위치 또는 경로가 잘못되었습니다.", this);
+                return false;
+            }
+        }
+
+        //CreateMonsterPool();
+        // 처음에는 50마리 준비, 이후 부족할 때마다 50마리 추가 , 보스 여부를 전달하여 풀 준비 개수도 구분
+        if (!PrepareMonsterPool(monsterPrefab, pointCount, isBoss))
+            return false;
+
+        // 사용하는 지점마다 한 마리씩 소환
+        for (int i = 0; i < pointCount; i++)
+        {
+            SpawnData data = spawnDatas[i];
+
+            Transform monster = monsterPool.Spawn(monsterPrefab.transform, data.spawnPoint.position, Quaternion.identity);
+
+            if (monster == null)
+                return false;
+
+            monster.localScale = Vector3.one * monsterScale;
+
             MonsterController controller = monster.GetComponent<MonsterController>();
 
-            // MonsterController가 없다면 잘못된 프리팹이므로 제거
-            if (controller == null)
-            {
-                Debug.LogError($"{monster.name}에 MonsterController가 없습니다.");
-                Destroy(monster);
-                continue;
-            }
-
-            // 일반 몬스터와 보스 카테고리 구분
             controller._enemyCategory = isBoss ? EnemyCategory.Boss : EnemyCategory.Nomal;
 
-            // 추후 CSV에서 일반 몬스터 또는 보스 체력 적용
+            // 기존 임시 체력 설정 유지
             controller.maxHp = 100;
 
-            // 기존 소환 데이터의 경로와 시작 지점 적용
-            controller.Init(spawnDatas[i].pathRoute, spawnDatas[i].spawnPointIndex);
+            controller.Init(data.pathRoute, data.spawnPointIndex, monsterPool);
 
-            // 현재 살아 있는 몬스터 수 증가
-            myChar.AddMonsterCount();
+            // 초기화가 완료된 보스만 UI에 등록
+            if (isBoss)
+            {
+                uiManger.RegisterBoss(controller);
+            }
         }
+
+        // 모든 지점의 소환 완료
+        return true;
     }
 
     // 현재 스테이지 등급과 일치하는 StageData를 찾아서 반환
@@ -170,8 +332,8 @@ public class SpawnManager : MonoBehaviour
         // 스테이지가 1보다 작아지는 상황 방지
         int currentStage = Mathf.Max(1, myChar.CurrentStage);
 
-        // 라운드가 1부터 전체 라운드 사이를 벗어나지 않도록 제한
-        int currentRound = Mathf.Clamp(myChar.CurrentRound, 1, totalRoundCount);
+        // 남은 라운드가 아닌 현재 웨이브로 몬스터 종류 결정
+        int currentWave = Mathf.Clamp(myChar.CurrentWave, 1, LastWave);
 
         /*
          * 현재 스테이지에서 사용할 첫 번째 몬스터 인덱스 계산
@@ -182,17 +344,11 @@ public class SpawnManager : MonoBehaviour
          */
         int firstMonsterIndex = (currentStage - 1) * monsterKindsPerStage;
 
-        /*
-         * 현재 라운드에서 사용할 몬스터 순번 계산
-         *
-         * 몬스터 2종, 30라운드:
-         * 1~15라운드  → 0
-         * 16~30라운드 → 1
-         */
-        int roundMonsterIndex = (currentRound - 1) * monsterKindsPerStage / totalRoundCount;
+        // 2종 기준: 1~15웨이브는 첫 번째, 16~30웨이브는 두 번째
+        int waveMonsterIndex = (currentWave - 1) * monsterKindsPerStage / LastWave;
 
         // 스테이지 시작 인덱스와 라운드 몬스터 순번을 합침
-        int monsterIndex = firstMonsterIndex + roundMonsterIndex;
+        int monsterIndex = firstMonsterIndex + waveMonsterIndex;
 
         // 목록의 마지막을 넘으면 해당 등급의 첫 번째 몬스터부터 다시 순환
         monsterIndex %= currentStageData.MonsterList.Count;
@@ -233,17 +389,150 @@ public class SpawnManager : MonoBehaviour
         return currentStageData.BossList[bossIndex];
     }
 
+    //스테이지에서 몇마리씩 소환하는지 체크하는 부분
+    private int GetActiveSpawnPointCount()
+    {
+        if (spawnDatas == null)
+            return 0;
+
+        int count = 1;
+
+        if (myChar.CurrentStage >= threePointStartStage)
+            count = 3;
+        else if (myChar.CurrentStage >= twoPointStartStage)
+            count = 2;
+
+        return Mathf.Min(count, spawnDatas.Length);
+    }
+
+    // 이번 소환에 필요한 개체를 풀에 준비
+    private bool PrepareMonsterPool(GameObject monsterPrefab, int requiredCount, bool isBoss)
+    {
+        // 일반 몬스터는 10마리, 보스는 1마리씩 준비
+        int batchSize = isBoss ? 1 : PoolBatchSize;
+
+        CreateMonsterPool();
+
+        PrefabPool prefabPool = monsterPool.GetPrefabPool(monsterPrefab);
+
+        if (prefabPool == null)
+        {
+            // 처음 사용하는 몬스터 종류라면 전용 풀 등록
+            prefabPool = new PrefabPool(monsterPrefab.transform);
+
+            // 50마리를 즉시 생성한 뒤 비활성 상태로 보관
+            prefabPool.preloadAmount = batchSize;
+            prefabPool.preloadTime = false;
+
+            // 생성 개수 제한은 사용하지 않음
+            prefabPool.limitInstances = false;
+
+            monsterPool.CreatePrefabPool(prefabPool);
+        }
+
+        // 현재 필드에 나온 개체가 아니라,
+        // 반환되어 재사용을 기다리는 개체 수를 확인
+        int availableCount = prefabPool.despawned.Count;
+
+        while (availableCount < requiredCount)
+        {
+            // 기존 풀에 제한 설정이 있더라도 사용하지 않도록 설정
+            prefabPool.limitInstances = false;
+
+            // 부족하면 50마리 단위로 추가 준비
+            for (int i = 0; i < batchSize; i++)
+            {
+                // 대기 중인 개체를 꺼내지 않고 새 개체를 생성
+                Transform instance = prefabPool.SpawnNew();
+
+                if (instance == null)
+                {
+                    Debug.LogError($"{monsterPrefab.name}의 풀 준비에 실패했습니다.", this);
+
+                    return false;
+                }
+
+                // 실제 전투용 Init()은 호출하지 않고 풀에 반환
+                monsterPool.Despawn(instance);
+                availableCount++;
+            }
+        }
+
+        return true;
+    }
+    // 보스 시간 초과에 대한 조건 검사
+    public void HandleBossTimeout(MonsterController boss, uint spawnVersion)
+    {
+        if (boss == null || boss.SpawnVersion != spawnVersion 
+            || boss._enemyCategory != EnemyCategory.Boss || !boss.IsTargetable)
+        {
+            return;
+        }
+
+        RetreatStage();
+    }
+    // 보스 시간 초과, 몬스터 수 초과 등 공통 실패 처리
+    public void RetreatStage()
+    {
+        //※※※※※나중에 UI효과로 변경하고 작동하게 할 예정※※※※※
+        StopSpawning();
+
+        // 보스 타이머와 참조부터 정리
+        if (uiManger != null)
+            uiManger.ClearBoss();
+
+        // 필드에 있는 모든 몬스터를 풀로 회수
+        if (monsterPool != null)
+            monsterPool.DespawnAll();
+
+        myChar.ResetMonsterCount();
+
+        // 같은 등급에서 3웨이브 후퇴, 최소 1웨이브
+        myChar.CurrentWave = Mathf.Max(1, myChar.CurrentWave - 3);
+
+        // 기존 규칙: 웨이브 유지, 라운드는 20으로 초기화
+        StartSpawning();
+    }
+    // 현재 등급과 스테이지에 맞는 웨이브당 소환 횟수
+    private int GetRoundsPerWave()
+    {
+        if (myChar.CurrentStageTier == StageTier.Normal)
+        {
+            switch (myChar.CurrentStage)
+            {
+                case 1:
+                    return 5;
+
+                case 2:
+                    return 10;
+
+                case 3:
+                case 4:
+                    return 15;
+            }
+        }
+
+        // 노멀 5스테이지 이상과 다른 등급은 기본 20회
+        return RoundsPerWave;
+    }
 
     // 설정된 시간 간격마다 일반 몬스터 반복 소환
     private IEnumerator AutoSpawn()
     {
-        while (true)
+        while (isSpawning)
         {
-            // 설정된 소환 간격만큼 대기
-            yield return new WaitForSeconds(spawnInterval);
+            yield return new WaitForSeconds(
+                Mathf.Max(0.01f, spawnInterval));
 
-            // 현재 등급과 라운드에 맞는 일반 몬스터 소환
+            if (!isSpawning)
+                break;
+
+            // 모든 사용 지점에 소환하는 묶음 한 번 실행
             SpawnAll();
         }
+
+        spawnCoroutine = null;
     }
+
+    
 }

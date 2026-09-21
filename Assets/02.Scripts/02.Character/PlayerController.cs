@@ -31,7 +31,11 @@ public class PlayerController : MonoBehaviour
     [Header("멀티샷")]
     [SerializeField] private int maxProjectileTargetCount = 1;
 
-
+    // 현재 공격 중인 타겟 목록
+    private readonly List<MonsterController> attackTargets = new List<MonsterController>();
+    
+    // 풀에서 재사용된 개체를 이전 타겟과 구분하기 위한 소환 번호
+    private readonly Dictionary<MonsterController, uint> targetVersions = new Dictionary<MonsterController, uint>();
     void Awake()
     {
         _anim = transform.GetComponentInChildren<Animator>();
@@ -250,51 +254,138 @@ public class PlayerController : MonoBehaviour
             FireProjectile(targets[i]);
         }
     }
+    //private List<MonsterController> FindAttackTargets(int maxCount)
+    //{
+    //    List<MonsterController> targets = new List<MonsterController>();
+
+    //    Collider2D[] colliders = Physics2D.OverlapCircleAll(
+    //        attackCenter.position,
+    //        attackRange,
+    //        monsterLayer
+    //    );
+
+    //    if (colliders == null || colliders.Length == 0)
+    //        return targets;
+
+    //    List<MonsterController> tempTargets = new List<MonsterController>();
+
+    //    for (int i = 0; i < colliders.Length; i++)
+    //    {
+    //        MonsterController monster = colliders[i].GetComponent<MonsterController>();
+
+    //        if (monster == null) continue;
+    //        if (!monster.gameObject.activeInHierarchy) continue;
+
+    //        tempTargets.Add(monster);
+    //    }
+
+    //    // 가까운 몬스터 우선 정렬
+    //    tempTargets.Sort((a, b) =>
+    //    {
+    //        float distanceA = Vector2.Distance(attackCenter.position, a.transform.position);
+    //        float distanceB = Vector2.Distance(attackCenter.position, b.transform.position);
+
+    //        return distanceA.CompareTo(distanceB);
+    //    });
+
+    //    for (int i = 0; i < tempTargets.Count; i++)
+    //    {
+    //        if (targets.Count >= maxCount)
+    //            break;
+
+    //        targets.Add(tempTargets[i]);
+    //    }
+
+    //    return targets;
+    //}
+
     private List<MonsterController> FindAttackTargets(int maxCount)
     {
-        List<MonsterController> targets = new List<MonsterController>();
+        maxCount = Mathf.Max(0, maxCount);
 
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(
-            attackCenter.position,
-            attackRange,
-            monsterLayer
-        );
+        Vector2 center = attackCenter.position;
+        float rangeSquared = attackRange * attackRange;
 
-        if (colliders == null || colliders.Length == 0)
-            return targets;
-
-        List<MonsterController> tempTargets = new List<MonsterController>();
-
-        for (int i = 0; i < colliders.Length; i++)
+        // 기존 타겟 중 더 이상 공격할 수 없는 대상만 제거
+        for (int i = attackTargets.Count - 1; i >= 0; i--)
         {
-            MonsterController monster = colliders[i].GetComponent<MonsterController>();
+            MonsterController target = attackTargets[i];
 
-            if (monster == null) continue;
-            if (!monster.gameObject.activeInHierarchy) continue;
+            bool isValid = target != null && target.IsTargetable &&
+                targetVersions.TryGetValue(target, out uint version) && target.SpawnVersion == version &&
+                ((Vector2)target.transform.position - center).sqrMagnitude <= rangeSquared;
 
-            tempTargets.Add(monster);
+            if (!isValid)
+            {
+                // 파괴된 Unity 오브젝트도 Dictionary에서 제거
+                if (!ReferenceEquals(target, null))
+                    targetVersions.Remove(target);
+
+                attackTargets.RemoveAt(i);
+            }
         }
 
-        // 가까운 몬스터 우선 정렬
-        tempTargets.Sort((a, b) =>
+        // 최대 타겟 수가 감소했다면 뒤쪽 타겟부터 해제
+        while (attackTargets.Count > maxCount)
         {
-            float distanceA = Vector2.Distance(attackCenter.position, a.transform.position);
-            float distanceB = Vector2.Distance(attackCenter.position, b.transform.position);
+            int lastIndex = attackTargets.Count - 1;
+
+            targetVersions.Remove(attackTargets[lastIndex]);
+            attackTargets.RemoveAt(lastIndex);
+        }
+
+        // 현재 타겟이 충분하면 새로 탐색하지 않음
+        if (attackTargets.Count >= maxCount)
+            return attackTargets;
+
+        Collider2D[] colliders = Physics2D.OverlapCircleAll(center, attackRange, monsterLayer);
+
+        List<MonsterController> candidates = new List<MonsterController>();
+
+        foreach (Collider2D hit in colliders)
+        {
+            MonsterController monster = hit.GetComponentInParent<MonsterController>();
+
+            if (monster == null || !monster.IsTargetable)
+                continue;
+
+            // 이미 선택한 적이나 중복 Collider는 제외
+            if (attackTargets.Contains(monster) || candidates.Contains(monster))
+            {
+                continue;
+            }
+
+            // 기존 타겟 유지 조건과 동일하게 중심 거리로 검사
+            if (((Vector2)monster.transform.position - center).sqrMagnitude
+                > rangeSquared)
+            {
+                continue;
+            }
+
+            candidates.Add(monster);
+        }
+
+        // 빈 타겟 자리를 채울 때만 가까운 적부터 선택
+        candidates.Sort((a, b) =>
+        {
+            float distanceA = ((Vector2)a.transform.position - center).sqrMagnitude;
+
+            float distanceB = ((Vector2)b.transform.position - center).sqrMagnitude;
 
             return distanceA.CompareTo(distanceB);
         });
 
-        for (int i = 0; i < tempTargets.Count; i++)
+        foreach (MonsterController monster in candidates)
         {
-            if (targets.Count >= maxCount)
+            if (attackTargets.Count >= maxCount)
                 break;
 
-            targets.Add(tempTargets[i]);
+            attackTargets.Add(monster);
+            targetVersions[monster] = monster.SpawnVersion;
         }
 
-        return targets;
+        return attackTargets;
     }
-
     private void FireProjectile(MonsterController target)
     {
         if (target == null) return;
