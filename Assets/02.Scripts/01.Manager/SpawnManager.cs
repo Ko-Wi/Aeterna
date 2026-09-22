@@ -172,7 +172,8 @@ public class SpawnManager : MonoBehaviour
         // 이번 소환으로 최대 몬스터 수를 초과했는지 확인
         if (myChar.CurrentMonsterCount > myChar.MaxEnemyCnt)
         {
-            RetreatStage();
+
+            uiManger.TransitionArea.SetActive(true);
             return; // 후퇴 후 기존 소환 처리가 이어지지 않도록 종료
         }
 
@@ -469,7 +470,8 @@ public class SpawnManager : MonoBehaviour
             return;
         }
 
-        RetreatStage();
+        uiManger.TransitionArea.SetActive(true);
+        //RetreatStage();
     }
     // 보스 시간 초과, 몬스터 수 초과 등 공통 실패 처리
     public void RetreatStage()

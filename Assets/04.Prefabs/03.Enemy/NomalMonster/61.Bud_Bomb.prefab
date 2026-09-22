@@ -904,8 +904,8 @@ SortingGroup:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8270121814066451375}
   m_Enabled: 1
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1189333691
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_SortAtRoot: 0
   m_Sort3DAs2D: 0
@@ -923,7 +923,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterController
   _enemyCategory: 0
   moveSpeed: 0.5
-  arriveDistance: 0.05
   _anim: {fileID: 0}
   hpBarPose: {fileID: 8140419866869072782}
   maxHp: 0

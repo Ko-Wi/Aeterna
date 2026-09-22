@@ -64,7 +64,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_IsActive
-    path: Image/Image
+    path: Image/Text (TMP)
     classID: 1
     script: {fileID: 0}
     flags: 0
@@ -85,7 +85,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_IsActive
-    path: Image/Text (TMP)
+    path: Image/Pet
     classID: 1
     script: {fileID: 0}
     flags: 0
@@ -107,7 +107,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 2651270628
+      path: 2515134631
       attribute: 2086281974
       script: {fileID: 0}
       typeID: 1
@@ -116,7 +116,7 @@ AnimationClip:
       isIntCurve: 0
       isSerializeReferenceCurve: 0
     - serializedVersion: 2
-      path: 2515134631
+      path: 1832595209
       attribute: 2086281974
       script: {fileID: 0}
       typeID: 1
@@ -193,7 +193,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_IsActive
-    path: Image/Image
+    path: Image/Text (TMP)
     classID: 1
     script: {fileID: 0}
     flags: 0
@@ -214,7 +214,7 @@ AnimationClip:
       m_PostInfinity: 2
       m_RotationOrder: 4
     attribute: m_IsActive
-    path: Image/Text (TMP)
+    path: Image/Pet
     classID: 1
     script: {fileID: 0}
     flags: 0

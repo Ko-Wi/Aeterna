@@ -10,6 +10,9 @@ public sealed class ScreenTransitionPanel : MonoBehaviour
 
     private Animator animator;
 
+    public Animator _animPet;
+    [SerializeField] private string[] animationNames;
+
     private void OnEnable()
     {
         animator = GetComponent<Animator>();
@@ -33,6 +36,7 @@ public sealed class ScreenTransitionPanel : MonoBehaviour
     // Cover의 마지막 프레임: 부모 패널 영역이 완전히 가려졌을 때 호출됩니다.
     public void OnCoverComplete()
     {
+        SpawnManager.Instance.RetreatStage();
         covered.Invoke();
     }
 
@@ -41,5 +45,24 @@ public sealed class ScreenTransitionPanel : MonoBehaviour
     {
         gameObject.SetActive(false);
         revealed.Invoke();
+    }
+
+    public void PlayRandomAnimation()
+    {
+        if (animator == null)
+            return;
+
+        if (animationNames == null || animationNames.Length == 0)
+            return;
+
+        int randomIndex = Random.Range(0, animationNames.Length);
+
+        string animName = animationNames[randomIndex];
+
+        Debug.Log(randomIndex + ": " + animName);
+
+        Debug.Log($"재생 애니메이션 : {animName}");
+
+        animator.Play(animationNames[randomIndex], 0, 0f);
     }
 }

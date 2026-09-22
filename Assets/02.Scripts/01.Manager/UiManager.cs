@@ -104,6 +104,7 @@ public class UiManager : MonoBehaviour
     private bool bossTimerRunning = false;
     private int displayedBossSeconds = -1;
 
+    public GameObject TransitionArea;       //스테이지 클리어실패시 롤백해주는 화면
     [Header("============등급 색상==========")]
     public Color[] bgColor;
     public Color[] highLight1Color;
@@ -173,7 +174,7 @@ public class UiManager : MonoBehaviour
             displayedStage = myChar.CurrentStage;
             displayedTier = myChar.CurrentStageTier;
 
-            StageText.text = $"{GetStageTierText(displayedTier)} - Stage.{displayedStage}";
+            StageText.text = $"{GetStageTierText(displayedTier)} - Stage {displayedStage}";
         }
 
         // 보스가 살아 있고, 등록 당시와 같은 소환 개체인지 확인
