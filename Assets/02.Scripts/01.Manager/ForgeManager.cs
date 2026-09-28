@@ -40,11 +40,7 @@ public class ForgeManager : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            Debug.Log(111);
-            OnClickSellForgeEquipment();
-        }
+
     }
     //현재 보여지는 장비 가져오기
     private Equipment GetCurrentForgeEquipment()
@@ -168,6 +164,9 @@ public class ForgeManager : MonoBehaviour
 
         myChar.Gold += sellPrice;
 
+        // 실제 판매한 가격을 표시
+        uiManager.ShowSellPrice(sellPrice);
+
         if (coinDropEffectPrefab != null)
             coinDropEffectPrefab.SellCoinEffectSetup();
 
@@ -199,9 +198,23 @@ public class ForgeManager : MonoBehaviour
 
         int basePrice = gradeBasePrices[gradeIndex];
 
-        return basePrice;
+        // 1~20: 0단계, 21~40: 1단계, 41~60: 2단계 ...
+        int levelStep = (level - 1) / 20;
+
+        int levelBonus = 0;
+
+        if (levelStep > 0)
+        {
+            int maxBonus = levelStep * 10;
+
+            // 정수 Random.Range의 최댓값은 포함되지 않으므로 +1
+            levelBonus = UnityEngine.Random.Range(maxBonus - 2, maxBonus + 1);
+        }
+
+        return basePrice + levelBonus;
     }
 
+    //장비 뽑는 부분(종류·등급·인덱스·레벨·옵션을 결정하고, 생성된 장비를 목록에 추가)
     public Equipment ForgeEquipment()
     {
         EquipmentSlotType slotType = GetRandomSummonSlot();
@@ -227,6 +240,9 @@ public class ForgeManager : MonoBehaviour
         myChar.ForgeEquipments.Add(equipment);
 
         //Debug.Log($"단조 완료: {slotType} / {grade} / Index: {equipmentIndex} / {statusType}: {statusValue} / Option Count: {options.Count}");
+        
+        // 장비가 정상적으로 추가되면 오리할콘 1개 소모
+        myChar.Orihalcon--;
 
         return equipment;
     }

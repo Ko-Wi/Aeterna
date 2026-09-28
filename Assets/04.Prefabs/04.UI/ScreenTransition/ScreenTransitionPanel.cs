@@ -49,7 +49,7 @@ public sealed class ScreenTransitionPanel : MonoBehaviour
 
     public void PlayRandomAnimation()
     {
-        if (animator == null)
+        if (_animPet == null)
             return;
 
         if (animationNames == null || animationNames.Length == 0)
@@ -59,10 +59,6 @@ public sealed class ScreenTransitionPanel : MonoBehaviour
 
         string animName = animationNames[randomIndex];
 
-        Debug.Log(randomIndex + ": " + animName);
-
-        Debug.Log($"재생 애니메이션 : {animName}");
-
-        animator.Play(animationNames[randomIndex], 0, 0f);
+        _animPet.Play(animationNames[randomIndex], 0, 0f);
     }
 }

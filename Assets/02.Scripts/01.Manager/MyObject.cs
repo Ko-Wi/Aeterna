@@ -1,6 +1,7 @@
 using LayerLab.ArtMakerUnity;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 public class MyObject : MonoBehaviour
@@ -27,9 +28,9 @@ public class MyObject : MonoBehaviour
 
     public int ForgeLevel = 1;
 
-    public int Gold;
-    public int Diamond;
-    public int Orihalcon;
+    public double Gold;
+    public int Gem;
+    public int Orihalcon = 100;
 
     [Header("스테이지")]
     [SerializeField] private int currentMonsterCount;           // 현재 살아 있는 몬스터 수
@@ -39,7 +40,7 @@ public class MyObject : MonoBehaviour
     public int CurrentWave = 1;                                 // 현재 스테이지의 웨이브
     public int CurrentRound = 20;                               // 현재 스테이지의 라운드
     public int MaxEnemyCnt = 60;                                // 최대 소환 가능 몬스터 수
-    public float BossTimeLimit = 60f;                                // 최대 소환 가능 몬스터 수
+    public float BossTimeLimit = 60f;                                // 보스 생존 시간
     public int CurrentMonsterCount => currentMonsterCount;
 
     [Header("장비 인덱스")]
@@ -69,6 +70,11 @@ public class MyObject : MonoBehaviour
     public int CostumeHelmetIndex = -1;
 
     public List<Equipment> ForgeEquipments = new List<Equipment>();
+
+    [Header("방치 보상")]
+    public float OfflineRewardMaxHours = 4f; // 기본 최대 4시간
+    public float OfflineRewardBonusHours = 0f; // 스킬트리로 추가할 시간
+
     [Header("환경 설정")]
     public bool BGMSound = false;
     public bool EffectSound = false;
@@ -146,3 +152,89 @@ public class MyObject : MonoBehaviour
 //        Index = index;
 //    }
 //}
+
+//단위 변환 코드
+public static class CurrencyExtension
+{
+    public static string ToCurrencyString(this double value)
+    {
+        if (double.IsNaN(value)) return "NaN";
+        if (double.IsPositiveInfinity(value)) return "∞";
+        if (double.IsNegativeInfinity(value)) return "-∞";
+
+        bool negative = value < 0;
+        double number = Math.Abs(value);
+        int unitIndex = 0;
+
+        // 1,000마다 다음 단위로 변경
+        while (number >= 1000d)
+        {
+            number /= 1000d;
+            unitIndex++;
+        }
+
+        // 정수 부분이 1자리면 소수점 2자리,
+        // 2자리면 소수점 1자리, 3자리면 소수점 없음
+        int decimals = number < 10d ? 2 : number < 100d ? 1 : 0;
+
+        number = Math.Round(number, decimals, MidpointRounding.AwayFromZero);
+
+        // 예: 999.9k → 반올림 후 1m
+        if (number >= 1000d)
+        {
+            number /= 1000d;
+            unitIndex++;
+        }
+
+        // 반올림으로 정수 자릿수가 바뀌었을 수 있으므로 다시 결정
+        string format = number < 10d ? "0.##"
+                      : number < 100d ? "0.#"
+                      : "0";
+
+        string sign = negative && number != 0d ? "-" : "";
+
+        return sign
+            + number.ToString(format, CultureInfo.InvariantCulture)
+            + GetUnit(unitIndex);
+    }
+
+    private static string GetUnit(int index)
+    {
+        switch (index)
+        {
+            case 0: return "";
+            case 1: return "k";
+            case 2: return "m";
+            case 3: return "b";
+            case 4: return "t";
+            case 5: return "q";
+        }
+
+        // 6번 단위부터 aa → ab → ... → az → ba → ... → zz → aaa
+        int number = index - 6 + 27;
+        string unit = "";
+
+        while (number > 0)
+        {
+            number--;
+            unit = (char)('a' + number % 26) + unit;
+            number /= 26;
+        }
+
+        return unit;
+    }
+    public static string ToCurrencyString(this int value)
+    {
+        return ToCurrencyString((double)value);
+    }
+
+    public static string ToCurrencyString(this float value)
+    {
+        return ToCurrencyString((double)value);
+    }
+
+    public static string ToCurrencyString(this long value)
+    {
+        return ToCurrencyString((double)value);
+    }
+}

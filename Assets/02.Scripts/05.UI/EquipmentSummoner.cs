@@ -25,6 +25,9 @@ public class EquipmentSummoner : MonoBehaviour
 
     public void OnClickSummonButton()
     {
+        // 재료가 없으면 제작 애니메이션도 시작하지 않음
+        if (myChar.Orihalcon <= 0) return;
+
         // 이미 소환 애니메이션이 진행 중이면 클릭 무시
         if (isSummoning) return;
 
@@ -66,45 +69,22 @@ public class EquipmentSummoner : MonoBehaviour
         int randomIndex = UnityEngine.Random.Range(0, summonParts.Length);
         return summonParts[randomIndex];
     }
-    //장비뽑기 이벤트 
-    //public void SummonEquipment()
-    //{
-    //    EquipmentSlotType summonSlot = GetRandomSummonSlot();
-
-    //    //등급 랜덤으로 뽑기
-    //    EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
-
-    //    int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);
-
-    //    AddOwnedEquipment(summonSlot, grade, equipmentIndex);
-
-    //    //Debug.Log($"뽑힌 장비 타입: {summonSlot} // {equipmentIndex} // {grade}");
-    //    uiManager.SummonUiSet();
-    //}
+    //장비뽑기 이벤트
     public void SummonEquipment()
     {
-        // 혹시 애니메이션 이벤트가 중복 호출되어도 한 번만 처리
+        // 애니메이션 이벤트가 중복 호출되어도 한 번만 처리
         if (!isSummoning)
             return;
 
-        EquipmentSlotType summonSlot = GetRandomSummonSlot();
+        isSummoning = false;
 
-        EquipmentGrade grade = gameManager.GetRandomEquipmentGrade();
+        Equipment equipment = forgeManager.ForgeEquipment();
 
-        int equipmentIndex = GetRandomIndexByGrade(summonSlot, grade);
-
-        AddOwnedEquipment(summonSlot, grade, equipmentIndex);
+        // 재료 부족 등으로 제작되지 않았다면 결과 UI를 열지 않음
+        if (equipment == null)
+            return;
 
         uiManager.SummonUiSet();
-
-        // 소환 처리가 끝났으므로 다시 클릭 허용
-        isSummoning = false;
-    }
-
-    //장비 단조
-    private void AddOwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
-    {
-        forgeManager.ForgeEquipment();
     }
 
     /// <summary>

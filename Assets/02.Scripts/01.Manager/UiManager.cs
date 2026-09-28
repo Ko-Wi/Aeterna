@@ -6,6 +6,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class UiManager : MonoBehaviour
 {
@@ -105,6 +106,22 @@ public class UiManager : MonoBehaviour
     private int displayedBossSeconds = -1;
 
     public GameObject TransitionArea;       //스테이지 클리어실패시 롤백해주는 화면
+
+    [Header("============일반 UI관련==========")]
+    public TMP_Text Gold_Text;
+    public TMP_Text Gem_Text;
+    public TMP_Text Orihalcon_Text;
+
+    [Header("판매 금액 표시")]
+    public TMP_Text Sell_Text;
+
+    // 화면 밖에 배치할 시작 위치
+    public RectTransform SellStartPoint;
+
+    private RectTransform sellTextRect;
+    private Vector2 sellTargetPosition;
+    private DG.Tweening.Sequence sellSequence;
+
     [Header("============등급 색상==========")]
     public Color[] bgColor;
     public Color[] highLight1Color;
@@ -119,6 +136,13 @@ public class UiManager : MonoBehaviour
     {
         myChar = MyObject.MyChar;
         spawnManager = SpawnManager.Instance;
+
+        // 에디터에서 배치한 현재 위치를 도착 위치로 저장
+        sellTextRect = Sell_Text.rectTransform;
+        sellTargetPosition = sellTextRect.anchoredPosition;
+
+        Sell_Text.raycastTarget = false;
+        Sell_Text.gameObject.SetActive(false);
     }
 
     // Update is called once per frame
@@ -143,9 +167,16 @@ public class UiManager : MonoBehaviour
         UpdateBossTimer();
 
         // 전투 진행 값과 저장된 보스 참조를 읽어 UI 갱신
-        StageUISet();       
-    }
+        StageUISet();
 
+        CostUISet();
+    }
+    public void CostUISet()
+    {
+        Gold_Text.text = myChar.Gold.ToCurrencyString();
+        Gem_Text.text = myChar.Gem.ToCurrencyString();
+        Orihalcon_Text.text = myChar.Orihalcon.ToCurrencyString();
+    }
     //몬스터 및 스테이지 관련 표시 UI
     public void StageUISet()
     {
@@ -709,7 +740,8 @@ public class UiManager : MonoBehaviour
                     optionValue.text = $"{option.Value}";
                     arrow.gameObject.SetActive(false);
 
-                    if (newEquipment != null)
+                    // 비교할 동일 옵션이 있는지 확인
+                    if (compareOption != null)
                     {
                         SetCompareArrow(arrow, option.Value, compareOption.Value);
                     }
@@ -845,5 +877,56 @@ public class UiManager : MonoBehaviour
             default:
                 return equipmentIcon;
         }
+    }
+    //장비 판매 가격을 보여주는 부분
+    public void ShowSellPrice(int price)
+    {
+        if (Sell_Text == null || SellStartPoint == null)
+            return;
+
+        // 연속 판매 시 이전 연출을 종료하고 최신 금액으로 재시작
+        sellSequence?.Kill();
+
+        Sell_Text.text = $"+{price.ToCurrencyString()}";
+        Sell_Text.gameObject.SetActive(true);
+        Sell_Text.alpha = 1f;
+
+        // 시작 지점의 월드 좌표 사용
+        sellTextRect.position = SellStartPoint.position;
+
+        sellSequence = DOTween.Sequence();
+
+        // 화면 밖에서 원래 위치로 진입
+        sellSequence.Append(
+            sellTextRect.DOAnchorPos(sellTargetPosition, 0.35f)
+                .SetEase(Ease.OutCubic)
+        );
+
+        // 판매 금액을 잠시 표시
+        sellSequence.AppendInterval(0.7f);
+
+        // 서서히 투명해지며 사라짐
+        sellSequence.Append(
+            DOTween.To(
+                () => Sell_Text.alpha,
+                alpha => Sell_Text.alpha = alpha,
+                0f,
+                0.25f
+            )
+        );
+
+        sellSequence.OnComplete(() =>
+        {
+            Sell_Text.gameObject.SetActive(false);
+        });
+    }
+
+    private void OnDisable()
+    {
+        sellSequence?.Kill();
+        sellSequence = null;
+
+        if (Sell_Text != null)
+            Sell_Text.gameObject.SetActive(false);
     }
 }

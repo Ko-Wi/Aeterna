@@ -504,10 +504,8 @@ public class SpawnManager : MonoBehaviour
             {
                 case 1:
                     return 5;
-
                 case 2:
                     return 10;
-
                 case 3:
                 case 4:
                     return 15;
