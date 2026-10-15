@@ -1,3 +1,4 @@
+using BackEnd;
 using LayerLab.ArtMakerUnity;
 using System;
 using System.Collections.Generic;
@@ -71,7 +72,16 @@ public class MyObject : MonoBehaviour
 
     public List<Equipment> ForgeEquipments = new List<Equipment>();
 
+    [Header("시간 관련")]
+    // 서버에서 마지막으로 받아온 UTC 시각
+    private DateTime baseServerTime;
+
+    // 서버 시간을 받아온 순간의 실행 경과 시간
+    private double baseRealtime;
+
     [Header("방치 보상")]
+    public DateTime lastIdleRewardTime;
+
     public float OfflineRewardMaxHours = 4f; // 기본 최대 4시간
     public float OfflineRewardBonusHours = 0f; // 스킬트리로 추가할 시간
 
@@ -108,6 +118,36 @@ public class MyObject : MonoBehaviour
         
     }
 
+    // 최초 로그인 및 백그라운드 복귀 시 호출
+    public void InitializeServerTime(Action onComplete = null)
+    {
+        Backend.Utils.GetServerTime(callback =>
+        {
+            if (!callback.IsSuccess())
+            {
+                Debug.LogError("서버 시간 동기화 실패: " + callback);
+                return;
+            }
+
+            baseServerTime = DateTimeOffset.Parse(
+                callback.GetReturnValuetoJSON()["utcTime"].ToString(),
+                CultureInfo.InvariantCulture
+            ).UtcDateTime;
+
+            baseRealtime = Time.realtimeSinceStartupAsDouble;
+
+            // 시간 동기화 성공 후 다음 로딩 실행
+            onComplete?.Invoke();
+        });
+    }
+
+    // 서버 요청 없이, 필요한 순간에만 현재 시각 계산
+    public DateTime GetCurrentServerTime()
+    {
+        double elapsed = Time.realtimeSinceStartupAsDouble - baseRealtime;
+        return baseServerTime.AddSeconds(elapsed);
+    }
+
     void OnLoadDataMgr()
     {
         string UpgradeResource = "01_Excel/UpgradeTable";
@@ -137,21 +177,84 @@ public class MyObject : MonoBehaviour
     {
         currentMonsterCount = 0;
     }
-}
-//[System.Serializable]
-//public class OwnedEquipment
-//{
-//    public EquipmentSlotType SlotType;
-//    public EquipmentGrade Grade;
-//    public int Index;
+    //================================================================================================
+    //========================================== 서버 저장 관련 =======================================
+    //================================================================================================
 
-//    public OwnedEquipment(EquipmentSlotType slotType, EquipmentGrade grade, int index)
-//    {
-//        SlotType = slotType;
-//        Grade = grade;
-//        Index = index;
-//    }
-//}
+    //오프라인보상 불러오기
+    public void LoadIdleStartTimeUtc()
+    {
+        Backend.GameData.GetMyData("IdleData", new Where(), callback =>
+        {
+            if (!callback.IsSuccess())
+            {
+                Debug.LogError("방치 데이터 불러오기 실패: " + callback);
+                return;
+            }
+
+            var rows = callback.FlattenRows();
+
+            if (rows.Count > 0)
+            {
+                var row = rows[0];
+
+                // 수정할 데이터의 inDate 보관
+                InDateManager.Set("IdleData", row["inDate"].ToString());
+
+                // 기존 누적 시작 시각 복원
+                lastIdleRewardTime = DateTimeOffset.Parse(row["LastIdleRewardTime"].ToString(), CultureInfo.InvariantCulture).UtcDateTime;
+
+                // 순차 로딩을 사용한다면 여기서 다음 로딩 실행
+                return;
+            }
+
+            // 서버 시간 받아서 사용하기
+            DateTime startUtc = GetCurrentServerTime();
+
+            Param data = new Param
+            {
+                { "LastIdleRewardTime", startUtc.ToString("o") }
+            };
+
+            Backend.GameData.Insert("IdleData", data, insertCallback =>
+            {
+                if (!insertCallback.IsSuccess())
+                {
+                    Debug.LogError("방치 데이터 생성 실패: " + insertCallback);
+                    return;
+                }
+
+                InDateManager.Set("IdleData", insertCallback.GetInDate());
+
+                lastIdleRewardTime = startUtc;
+
+                // 순차 로딩을 사용한다면 여기서 다음 로딩 실행
+            });
+        });
+    }
+    //오프라인보상 저장하는 부분
+    public void SaveIdleStartTimeUtc(DateTime startUtc, Action<bool> onComplete = null)
+    {
+        Param data = new Param
+        {
+            { "LastIdleRewardTime", startUtc.ToString("o") }
+        };
+
+        Backend.GameData.UpdateV2("IdleData", InDateManager.Get("IdleData"), Backend.UserInDate, data, callback =>
+        {
+            bool success = callback.IsSuccess();
+
+            // 저장에 성공한 경우에만 현재 기준 시각 변경
+            if (success)
+                lastIdleRewardTime = startUtc;
+            else
+                Debug.LogError("방치 시간 저장 실패: " + callback);
+
+            onComplete?.Invoke(success);
+        });
+    }
+
+}
 
 //단위 변환 코드
 public static class CurrencyExtension

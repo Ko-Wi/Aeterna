@@ -38,6 +38,9 @@ MonoBehaviour:
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1787684395-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-998521542-0
         - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-92627326-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-227976642-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-1888589581-0
+        - globalObjectIdString: GlobalObjectId_V1-2-ddef04d638968564b858d3d1f9322b04-862327574-0
         values:
         - colorIndex: 0
           iconNameOrGuid: Camera Icon
@@ -97,6 +100,18 @@ MonoBehaviour:
           isColorRecursive: 0
         - colorIndex: 0
           iconNameOrGuid: sv_icon_dot6_pix16_gizmo
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: cs Script Icon
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: cs Script Icon
+          isIconRecursive: 0
+          isColorRecursive: 0
+        - colorIndex: 0
+          iconNameOrGuid: cs Script Icon
           isIconRecursive: 0
           isColorRecursive: 0
         - colorIndex: 0

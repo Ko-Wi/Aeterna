@@ -97,6 +97,7 @@ public class GameManager : MonoBehaviour
         //}
     }
 
+    //몬스터 Hp바 생성 혹은 풀로 얻게 하기
     public GameObject GetHPBar()
     {
         GameObject obj;
@@ -113,6 +114,7 @@ public class GameManager : MonoBehaviour
         obj.SetActive(true);
         return obj;
     }
+    //몬스터 Hp바 회수하는 부분
 
     public void ReturnHPBar(GameObject obj)
     {

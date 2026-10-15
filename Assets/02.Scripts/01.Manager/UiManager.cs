@@ -32,6 +32,7 @@ public class UiManager : MonoBehaviour
     /*************************************************************************************/
     MyObject myChar;
     private SpawnManager spawnManager;
+    [SerializeField] private OfflineRewardManager offlineRewardManager;
     [Header("============UI 포지==========")]
     //뽑힌 장비 보여주는 Panel
     public GameObject SummonEquipment;
@@ -122,6 +123,10 @@ public class UiManager : MonoBehaviour
     private Vector2 sellTargetPosition;
     private DG.Tweening.Sequence sellSequence;
 
+    [Header("===========방치 보상 관련=============")]
+    public GameObject OfflineReward_Panel;
+    public GameObject OfflineRewardBtn;
+
     [Header("============등급 색상==========")]
     public Color[] bgColor;
     public Color[] highLight1Color;
@@ -132,6 +137,15 @@ public class UiManager : MonoBehaviour
     [SerializeField] private Color optionDownColor = Color.red;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private void OnDisable()
+    {
+        sellSequence?.Kill();
+        sellSequence = null;
+
+        if (Sell_Text != null)
+            Sell_Text.gameObject.SetActive(false);
+    }
+
     void Start()
     {
         myChar = MyObject.MyChar;
@@ -163,14 +177,13 @@ public class UiManager : MonoBehaviour
     }
     private void LateUpdate()
     {
-        // 시간 초과 처리를 먼저 실행
-        UpdateBossTimer();
+        CostUISet();                        
+        StageUISet();                       // 전투 진행 값과 저장된 보스 참조를 읽어 UI 갱신
+        UpdateBossTimer();                  // 시간 초과 처리를 먼저 실행
+        OfflineUISet();                     //오프라인관련
 
-        // 전투 진행 값과 저장된 보스 참조를 읽어 UI 갱신
-        StageUISet();
-
-        CostUISet();
     }
+   
     public void CostUISet()
     {
         Gold_Text.text = myChar.Gold.ToCurrencyString();
@@ -362,7 +375,72 @@ public class UiManager : MonoBehaviour
 
         currentBoss = null;
     }
+    private void OfflineUISet()
+    {
+        // 최대 누적 시간이 적용된 초 단위 시간과 보상
+        offlineRewardManager.GetRewardPreview(out int seconds, out int gold, out int orihalcon);
 
+        bool canClaim = seconds >= 300;
+
+        var Alert_Dot = OfflineRewardBtn.transform.Find("Alert_Dot").gameObject;
+        Alert_Dot.SetActive(canClaim);
+
+        if (!OfflineReward_Panel.activeSelf)
+            return;
+
+        var OfflineReward = OfflineReward_Panel.transform.Find("OfflineReward");
+        //상단 ui관련 부분
+        var Top = OfflineReward.Find("Top");
+        var OfflineReward_Text = Top.Find("OfflineReward_Text").GetComponent<TMP_Text>();
+        var OfflineTime_Text = Top.Find("OfflineTime_Text").GetComponent<TMP_Text>();
+        var Coin_Text = Top.Find("Coin").GetComponentInChildren<TMP_Text>();
+        var Orihalcon = Top.Find("Orihalcon").GetComponentInChildren<TMP_Text>();
+        //하단 ui 관련부분
+        var Reward_Btn = OfflineReward.Find("Reward_Btn");
+        var Reward_Btn_Alert = Reward_Btn.Find("Alert_Dot").gameObject;
+        var Reward_Btn_Text = Reward_Btn.GetComponentInChildren<TMP_Text>();
+        var Reward_Coin_Text = OfflineReward.Find("Coin").GetComponentInChildren<TMP_Text>();
+        var Reward_Orehalcon_Text = OfflineReward.Find("Orihalcon").GetComponentInChildren<TMP_Text>();
+
+        Reward_Btn_Alert.SetActive(canClaim);
+
+        OfflineReward_Text.text = "오프라인 보상";
+
+        int hours = seconds / 3600;
+        int minutes = seconds / 60 % 60;
+        int remainingSeconds = seconds % 60;
+
+        if (hours > 0)
+        {
+            OfflineTime_Text.text = minutes == 0
+                ? $"수집 시간 : <color=green>{hours}시</color>"
+                : $"수집 시간 : <color=green>{hours}시 {minutes:00}분</color>";
+        }
+        else if (minutes > 0)
+        {
+            // 01분:05초
+            OfflineTime_Text.text = $"수집 시간 : <color=green>{minutes:00}분 {remainingSeconds:00}초</color>";
+        }
+        else
+        {
+            // 0초, 1초, 59초
+            OfflineTime_Text.text = $"수집 시간 : <color=green>{remainingSeconds}초</color>";
+        }
+        Coin_Text.text = "1/초";
+        Orihalcon.text = "1/분";
+
+        // 현재 받을 수 있는 보상
+        Reward_Coin_Text.text = gold.ToCurrencyString();
+        Reward_Orehalcon_Text.text = orihalcon.ToCurrencyString();
+
+        Reward_Btn_Text.text = "수령";
+
+        var Reward_Btn_Bg = Reward_Btn.Find("Bg").GetComponent<Image>();
+        var Reward_Btn_Light = Reward_Btn.Find("Light").gameObject;
+        var Reward_Btn_HighLight = Reward_Btn.Find("HighLight").gameObject;
+
+        SetRewardButtonState(Reward_Btn_Bg, Reward_Btn_Light, Reward_Btn_HighLight, canClaim);
+    }
     private void RefreshBossTimer(float remainingTime)
     {
         if (bossTimerSlider != null)
@@ -921,12 +999,14 @@ public class UiManager : MonoBehaviour
         });
     }
 
-    private void OnDisable()
+    private void SetRewardButtonState(Image background, GameObject light, GameObject highlight, bool canClaim)
     {
-        sellSequence?.Kill();
-        sellSequence = null;
+        background.color = canClaim
+            ? new Color32(91, 176, 240, 255)   // 활성 색상
+            : new Color32(109, 109, 109, 255); // 비활성 색상
 
-        if (Sell_Text != null)
-            Sell_Text.gameObject.SetActive(false);
+        light.SetActive(canClaim);
+        highlight.SetActive(canClaim);
     }
+
 }
