@@ -45,12 +45,12 @@ public class UiManager : MonoBehaviour
     public GameObject WeaponSlot;
     public GameObject HelmetSlot;
     public GameObject ChestSlot;
-    public GameObject PantsSlot;
     public GameObject BootsSlot;
     public GameObject RingSlot;
     public GameObject AmuletSlot;
     public GameObject BeltSlot;
     public GameObject ShieldSlot;
+    public GameObject WingSlot;
 
     [Header("장비관련 아이콘 이미지")]
     [Header("===========무기===========")]
@@ -63,12 +63,13 @@ public class UiManager : MonoBehaviour
     [Header("===========방어구===========")]
     public List<Sprite> chestIcon;
     public List<Sprite> helmetIcon;
-    public List<Sprite> pantsIcon;
     public List<Sprite> amuletIcon;
     public List<Sprite> ringIcon;
     public List<Sprite> bootsIcon;
     public List<Sprite> beltIcon;
     public List<Sprite> shieldIcon;
+    [Header("===========날개===========")]
+    public List<Sprite> WingIcon;
 
     [Header("===========메인 전투 UI===========")]
     public TMP_Text WaveText;
@@ -519,10 +520,6 @@ public class UiManager : MonoBehaviour
                 selectSlot = HelmetSlot;
                 currentEquipment = myChar.EquippedHelmet;
                 break;
-            case EquipmentSlotType.Pants:
-                selectSlot = PantsSlot;
-                currentEquipment = myChar.EquippedPants;
-                break;
             case EquipmentSlotType.Amulet:
                 selectSlot = AmuletSlot;
                 currentEquipment = myChar.EquippedAmulet;
@@ -542,6 +539,10 @@ public class UiManager : MonoBehaviour
             case EquipmentSlotType.Shield:
                 selectSlot = ShieldSlot;
                 currentEquipment = myChar.EquippedShield;
+                break;
+            case EquipmentSlotType.Wing:
+                selectSlot = WingSlot;
+                currentEquipment = myChar.EquippedWing;
                 break;
         }
 
@@ -572,22 +573,22 @@ public class UiManager : MonoBehaviour
                 equipment = myChar.EquippedChest;
                 break;
             case 3:
-                equipment = myChar.EquippedPants;
-                break;
-            case 4:
                 equipment = myChar.EquippedBoots;
                 break;
-            case 5:
+            case 4:
                 equipment = myChar.EquippedRing;
                 break;
-            case 6:
+            case 5:
                 equipment = myChar.EquippedAmulet;
                 break;
-            case 7:
+            case 6:
                 equipment = myChar.EquippedBelt;
                 break;
-            case 8:
+            case 7:
                 equipment = myChar.EquippedShield;
+                break;
+            case 8:
+                equipment = myChar.EquippedWing;
                 break;
         }
         if (equipment.EquipmentIndex == -1) return;
@@ -684,9 +685,6 @@ public class UiManager : MonoBehaviour
             case EquipmentSlotType.Helmet:
                 return myChar.EquippedHelmet;
 
-            case EquipmentSlotType.Pants:
-                return myChar.EquippedPants;
-
             case EquipmentSlotType.Amulet:
                 return myChar.EquippedAmulet;
 
@@ -701,6 +699,9 @@ public class UiManager : MonoBehaviour
 
             case EquipmentSlotType.Shield:
                 return myChar.EquippedShield;
+
+            case EquipmentSlotType.Wing:
+                return myChar.EquippedWing;
 
             default:
                 return null;
@@ -782,17 +783,16 @@ public class UiManager : MonoBehaviour
                     case EquipmentStatusType.Attack:
                         optionName.text = "공격력";
                         break;
-                    case EquipmentStatusType.Defense:
-                        optionName.text = "방어력";
-                        break;
-                    case EquipmentStatusType.Hp:
-                        optionName.text = "체력";
-                        break;
+                    //case EquipmentStatusType.Defense:
+                    //    optionName.text = "방어력";
+                    //    break;
+                    //case EquipmentStatusType.Hp:
+                    //    optionName.text = "체력";
+                    //    break;
                 }
-                optionValue.text = $"{currentEquipment.MainStatusValue}";
+                optionValue.text = $"{currentEquipment.MainStatusValue.ToCurrencyString()}";
+                
                 arrow.gameObject.SetActive(false);
-
-                optionValue.text = currentEquipment.MainStatusValue.ToString();
 
                 if (newEquipment != null && currentEquipment.MainStatusType == newEquipment.MainStatusType)
                 {
@@ -838,7 +838,7 @@ public class UiManager : MonoBehaviour
 
 
 
-    private void SetCompareArrow(Transform arrow, int currentValue, int compareValue)
+    private void SetCompareArrow(Transform arrow, double currentValue, double compareValue)
     {
         if (currentValue == compareValue)
         {
@@ -940,8 +940,6 @@ public class UiManager : MonoBehaviour
                 return equipmentIcon = chestIcon[equipment.EquipmentIndex];
             case EquipmentSlotType.Helmet:
                 return equipmentIcon = helmetIcon[equipment.EquipmentIndex];
-            case EquipmentSlotType.Pants:
-                return equipmentIcon = pantsIcon[equipment.EquipmentIndex];
             case EquipmentSlotType.Amulet:
                 return equipmentIcon = amuletIcon[equipment.EquipmentIndex];
             case EquipmentSlotType.Ring:
@@ -952,6 +950,8 @@ public class UiManager : MonoBehaviour
                 return equipmentIcon = beltIcon[equipment.EquipmentIndex];
             case EquipmentSlotType.Shield:
                 return equipmentIcon = shieldIcon[equipment.EquipmentIndex];
+            case EquipmentSlotType.Wing:
+                return equipmentIcon = WingIcon[equipment.EquipmentIndex];
             default:
                 return equipmentIcon;
         }

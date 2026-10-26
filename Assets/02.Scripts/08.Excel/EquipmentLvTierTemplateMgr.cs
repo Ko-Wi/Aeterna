@@ -14,37 +14,23 @@ public class EquipmentLvTierTemplateMgr : MUIBase<EquipmentLvTierTemplate>
 
     static public string ReadFile(string FileName)
     {
-        TextAsset TextAsset = (TextAsset)Resources.Load(FileName, typeof(TextAsset));
-        if (TextAsset == null) return "";
+        TextAsset textAsset = Resources.Load<TextAsset>(FileName);
 
-        byte[] bytes = Encoding.UTF8.GetBytes(TextAsset.ToString());
-        string sZData = Encoding.UTF8.GetString(bytes);
+        if (textAsset == null)
+            return "";
 
-        //byte[] bytes = TextAsset.bytes;
-        //UTF8Encoding pUTF8 = new UTF8Encoding(true);
-        //string sZData = pUTF8.GetString(bytes);
+        string data = textAsset.text;
 
-        Resources.UnloadAsset(TextAsset);
+        Resources.UnloadAsset(textAsset);
 
-        return sZData;
+        return data;
     }
 
     public void OnDataLoad(string _textResource)
     {
         if (TextResource == "" && _textResource == "") return;
 
-        if (TextResource == "")
-        {
-            TextResource = _textResource;
-        }
-        if (TextResource != _textResource)
-        {
-            TextResource = _textResource;
-        }
-        else
-        {
-            if (flagDataLoad) return;
-        }
+        TextResource = _textResource;
 
         string Data = ReadFile(_textResource);
 

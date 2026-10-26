@@ -79,6 +79,9 @@ public class ForgeManager : MonoBehaviour
 
         if (playerController != null)
             playerController.ApplyEquipFromMyChar();
+
+        // 변경된 착용 장비를 기준으로 공격력과 크리티컬 확률을 갱신합니다.
+        myChar.RefreshEquipmentStats();
     }
 
     //장비 장착 눌렀을때 장착처리해주기 [장비장착 or 장비교환]
@@ -109,11 +112,6 @@ public class ForgeManager : MonoBehaviour
                 myChar.EquippedChest = newEquipment;
                 break;
 
-            case EquipmentSlotType.Pants:
-                oldEquipment = myChar.EquippedPants;
-                myChar.EquippedPants = newEquipment;
-                break;
-
             case EquipmentSlotType.Boots:
                 oldEquipment = myChar.EquippedBoots;
                 myChar.EquippedBoots = newEquipment;
@@ -132,6 +130,11 @@ public class ForgeManager : MonoBehaviour
             case EquipmentSlotType.Belt:
                 oldEquipment = myChar.EquippedBelt;
                 myChar.EquippedBelt = newEquipment;
+                break;
+
+            case EquipmentSlotType.Wing:
+                oldEquipment = myChar.EquippedWing;
+                myChar.EquippedWing = newEquipment;
                 break;
         }
 
@@ -184,16 +187,16 @@ public class ForgeManager : MonoBehaviour
 
         int[] gradeBasePrices =
         {
-            10,     // Common
-            12,     // Magic
-            15,     // Rare
-            18,     // Heroic
-            21,    // Legendary
-            25,    // Unique
-            29,    // Mythic
-            33,   // Ancient
-            37,   // Abyssal
-            42    // Genesis
+            20,     // Common
+            24,     // Magic
+            30,     // Rare
+            36,     // Heroic
+            42,    // Legendary
+            50,    // Unique
+            58,    // Mythic
+            66,   // Ancient
+            74,   // Abyssal
+            84    // Genesis
         };
 
         int basePrice = gradeBasePrices[gradeIndex];
@@ -223,7 +226,8 @@ public class ForgeManager : MonoBehaviour
         int equipmentLevel = GetRandomEquipmentLevel(grade);
 
         EquipmentStatusType statusType = GetMainStatusType(slotType);
-        int statusValue = GetMainStatusValue(grade);
+        //장비의 기본 능력치 뽑는부분
+        double statusValue = GetMainStatusValue(slotType, grade, equipmentLevel);
 
         List<EquipmentOption> options = CreateRandomOptions(slotType, grade);
 
@@ -246,21 +250,20 @@ public class ForgeManager : MonoBehaviour
 
         return equipment;
     }
-
+        
     private EquipmentSlotType GetRandomSummonSlot()
     {
         if (myChar.EquippedWeapon.EquipmentIndex == -1)
         {
             return GetRandomWeaponType();
         }
-
+        // 일반 제작으로 획득할 장비 목록
         EquipmentSlotType[] summonParts =
         {
             EquipmentSlotType.Wand,
             EquipmentSlotType.Staff,
             EquipmentSlotType.Helmet,
             EquipmentSlotType.Chest,
-            EquipmentSlotType.Pants,
             EquipmentSlotType.Boots,
             EquipmentSlotType.Ring,
             EquipmentSlotType.Amulet,
@@ -375,7 +378,6 @@ public class ForgeManager : MonoBehaviour
 
             case EquipmentSlotType.Helmet:
             case EquipmentSlotType.Chest:
-            case EquipmentSlotType.Pants:
             case EquipmentSlotType.Boots:
             case EquipmentSlotType.Shield:
                 return EquipmentStatusType.Attack;
@@ -385,6 +387,8 @@ public class ForgeManager : MonoBehaviour
             case EquipmentSlotType.Belt:
                 return EquipmentStatusType.Attack;
 
+            case EquipmentSlotType.Wing:
+                return EquipmentStatusType.Attack;
             default:
                 return EquipmentStatusType.Attack;
         }
@@ -394,15 +398,24 @@ public class ForgeManager : MonoBehaviour
     {
         uiManager.SummonUiSet();
     }
-
-    private int GetMainStatusValue(EquipmentGrade grade)
+    //장비 뽑을때 기본 옵션을 뽑는 부분 EquipmentValueDataMgr에서 값을 받아와서
+    //기본옵션 * 1.01^(장비레벨-1)으로 계산해줌
+    private double GetMainStatusValue(EquipmentSlotType slotType, EquipmentGrade grade, int level)
     {
-        int gradeIndex = (int)grade;
+        string type = "Armor";
 
-        int minValue = 10 + gradeIndex * 10;
-        int maxValue = 20 + gradeIndex * 15;
+        if (slotType == EquipmentSlotType.Wand || slotType == EquipmentSlotType.Staff)
+        {
+            type = "Weapon";
+        }
 
-        return UnityEngine.Random.Range(minValue, maxValue + 1);
+        var template = myChar.EquipmentValueDataMgr.GetTemplate(type);
+
+        double baseValue = template.Values[(int)grade];
+
+        double value = baseValue * Math.Pow(1.01, level - 1);
+
+        return value;
     }
 
     private List<EquipmentOption> CreateRandomOptions(EquipmentSlotType slotType, EquipmentGrade grade)
@@ -487,9 +500,7 @@ public class ForgeManager : MonoBehaviour
 
 public enum EquipmentStatusType
 {
-    Attack,
-    Defense,
-    Hp
+    Attack
 }
 
 public enum EquipmentOptionType

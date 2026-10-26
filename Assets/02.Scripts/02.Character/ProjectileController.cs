@@ -10,12 +10,15 @@ public class ProjectileController : MonoBehaviour
     private Rigidbody2D __rigidbody2D;
     private MonsterController target;
     private Vector2 lastDirection = Vector2.right;
-    private int damage;
+    private double damage;
     private float timer;
     private bool hasHit;
 
     // 투사체 생성 당시 타겟의 소환 번호
     private uint targetSpawnVersion;
+
+    // 발사할 때 결정된 크리티컬 여부를 저장합니다.
+    private bool isCritical;
 
     // 처음 지정했던 생애의 몬스터가 아직 살아 있는지 확인
     private bool HasValidTarget => target != null && target.IsTargetable && target.SpawnVersion == targetSpawnVersion;
@@ -25,12 +28,14 @@ public class ProjectileController : MonoBehaviour
         __rigidbody2D = GetComponent<Rigidbody2D>();
     }
 
-    public void Init(MonsterController target, int damage)
+    // 투사체의 공격 대상과 발사 시점의 데미지를 설정합니다.
+    public void Init(MonsterController target, double damage, bool critical = false)
     {
         this.target = target;
         this.damage = damage;
+        isCritical = critical;
 
-        // 현재 타겟의 소환 번호 저장
+        // 같은 몬스터 오브젝트가 재소환된 경우를 구분합니다.
         targetSpawnVersion = target != null ? target.SpawnVersion : 0;
 
         UpdateDirection();
@@ -94,7 +99,9 @@ public class ProjectileController : MonoBehaviour
         if (hiatEffect != null)
             Instantiate(hiatEffect, transform.position, Quaternion.identity);
 
-        monster.AttackHit(damage, false);
+        // 최종 데미지와 크리티컬 여부를 전달합니다.
+        // 몬스터는 이 결과로 피해를 적용하고 크리티컬 UI를 표시합니다.
+        monster.AttackHit(damage, isCritical);
 
         Destroy(gameObject);
     }

@@ -10,7 +10,7 @@ public class Equipment
     public int EquipmentLevel = 0;                  // 장비 레벨
 
     public EquipmentStatusType MainStatusType;
-    public int MainStatusValue;
+    public double MainStatusValue;
 
     public List<EquipmentOption> Options = new List<EquipmentOption>();
 
@@ -22,7 +22,7 @@ public class Equipment
     }
 
     public Equipment(EquipmentSlotType slotType, EquipmentGrade grade, int equipmentIndex,
-        int equipmentLevel, EquipmentStatusType mainStatusType, int mainStatusValue, List<EquipmentOption> options)
+        int equipmentLevel, EquipmentStatusType mainStatusType, double mainStatusValue, List<EquipmentOption> options)
     {
         SlotType = slotType;
         Grade = grade;
@@ -36,6 +36,7 @@ public class Equipment
     }
     public bool IsValid()
     {
+        // 장비 부위가 있고, 이미지 인덱스가 지정되어 있으며, 장비 레벨이 1 이상이면 유효한 장비로 판단합니다.
         return SlotType != EquipmentSlotType.None && EquipmentIndex >= 0 && EquipmentLevel > 0;
     }
 }

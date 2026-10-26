@@ -44,6 +44,16 @@ public class MyObject : MonoBehaviour
     public float BossTimeLimit = 60f;                                // 보스 생존 시간
     public int CurrentMonsterCount => currentMonsterCount;
 
+    [Header("현재 능력치")]
+
+    public double TotalAttack;         // 공격력
+    public float TotalCriticalRate;    // 크리티컬 확률
+    public float TotalAttackSpeed = 1.5f; // 장비 옵션까지 반영한 최종 배율
+
+
+    public float BaseCriticalRate = 0f;       // 장비 없이 가지는 기본 확률(%)
+    public float BaseAttackSpeed = 1.5f;  // 기본 공격 애니메이션 배율
+    public float CriticalDamageMultiplier = 2f; // 크리티컬 발생 시 데미지 배율
     [Header("장비 인덱스")]
     public PartsCategory[] categories;
 
@@ -55,13 +65,14 @@ public class MyObject : MonoBehaviour
     public Equipment EquippedWeapon = new Equipment();   //무기
     public Equipment EquippedHelmet = new Equipment();   //투구
     public Equipment EquippedChest = new Equipment();    //갑옷
-    public Equipment EquippedPants = new Equipment();    //하의
     public Equipment EquippedBoots = new Equipment();    //신발
     public Equipment EquippedRing = new Equipment();     //반지
     public Equipment EquippedAmulet = new Equipment();   //목걸이
     public Equipment EquippedBelt = new Equipment();     //벨트
     public Equipment EquippedShield = new Equipment();   //방패[보조무기]
-        
+    
+    public Equipment EquippedWing = new Equipment();    //날개
+
     [Header("코스튬 인덱스")]
     public PartsType CostumeWeaponType;
     public int CostumeWeapon = -1;
@@ -92,6 +103,7 @@ public class MyObject : MonoBehaviour
     //==================== 엑셀관련 =====================
     public UpgradeTemplateMgr UpgradeDataMgr;
     public EquipmentLvTierTemplateMgr LvTierDataMgr;
+    public EquipmentValueTemplateMgr EquipmentValueDataMgr;
 
     private void Awake()
     {
@@ -104,8 +116,10 @@ public class MyObject : MonoBehaviour
 
         UpgradeDataMgr = new UpgradeTemplateMgr();
         LvTierDataMgr = new EquipmentLvTierTemplateMgr();
+        EquipmentValueDataMgr = new EquipmentValueTemplateMgr();
 
         OnLoadDataMgr();
+        RefreshEquipmentStats();
     }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
@@ -148,12 +162,22 @@ public class MyObject : MonoBehaviour
         return baseServerTime.AddSeconds(elapsed);
     }
 
+    // 장비 데이터가 변경되었을 때만 호출해 전투 수치를 갱신합니다.
+    public void RefreshEquipmentStats()
+    {
+        TotalAttack = GetTotalAttack();
+        TotalCriticalRate = GetTotalCriticalRate();
+        TotalAttackSpeed = CalculateTotalAttackSpeed();
+    }
+
     void OnLoadDataMgr()
     {
         string UpgradeResource = "01_Excel/UpgradeTable";
         UpgradeDataMgr.OnDataLoad(UpgradeResource);
         string LvTierResource = "01_Excel/EquipmentLvTier";
         LvTierDataMgr.OnDataLoad(LvTierResource);
+        string EquipmentValueResource = "01_Excel/EquipmentValue";
+        EquipmentValueDataMgr.OnDataLoad(EquipmentValueResource);
     }
 
     // 몬스터가 생성되었을 때 현재 몬스터 수 증가
@@ -177,6 +201,139 @@ public class MyObject : MonoBehaviour
     {
         currentMonsterCount = 0;
     }
+
+    // 현재 착용 중인 모든 장비의 기본 공격력을 합산합니다.
+    // 공격할 때 호출하므로 장비를 교체하면 다음 공격부터 반영됩니다.
+    public double GetTotalAttack()
+    {
+        double attack = 0;
+
+        attack += GetEquipmentAttack(EquippedWeapon);   // 무기
+        attack += GetEquipmentAttack(EquippedHelmet);   // 투구
+        attack += GetEquipmentAttack(EquippedChest);    // 상의
+        attack += GetEquipmentAttack(EquippedBoots);    // 신발
+        attack += GetEquipmentAttack(EquippedRing);     // 반지
+        attack += GetEquipmentAttack(EquippedAmulet);   // 목걸이
+        attack += GetEquipmentAttack(EquippedBelt);     // 벨트
+        attack += GetEquipmentAttack(EquippedShield);   // 방패
+        attack += GetEquipmentAttack(EquippedWing);    // 날개
+
+        return attack;
+    }
+    // 기본 확률과 착용 장비의 크리티컬 확률을 합산합니다.
+    // 반환값은 0~100 사이의 퍼센트입니다.
+    public float GetTotalCriticalRate()
+    {
+        float rate = BaseCriticalRate;
+
+        rate += GetEquipmentCriticalRate(EquippedWeapon);
+        rate += GetEquipmentCriticalRate(EquippedHelmet);
+        rate += GetEquipmentCriticalRate(EquippedChest);
+        rate += GetEquipmentCriticalRate(EquippedBoots);
+        rate += GetEquipmentCriticalRate(EquippedRing);
+        rate += GetEquipmentCriticalRate(EquippedAmulet);
+        rate += GetEquipmentCriticalRate(EquippedBelt);
+        rate += GetEquipmentCriticalRate(EquippedShield);
+        rate += GetEquipmentCriticalRate(EquippedWing);
+
+        return Mathf.Clamp(rate, 0f, 100f);
+    }
+
+    // 기본 공격속도에 착용 장비의 공격속도 증가율을 반영합니다.
+    // 예: 기본 2배속 + 장비 옵션 합계 20% = 최종 2.4배속
+    private float CalculateTotalAttackSpeed()
+    {
+        float rate = 0f;
+
+        rate += GetEquipmentAttackSpeed(EquippedWeapon);
+        rate += GetEquipmentAttackSpeed(EquippedHelmet);
+        rate += GetEquipmentAttackSpeed(EquippedChest);
+        rate += GetEquipmentAttackSpeed(EquippedBoots);
+        rate += GetEquipmentAttackSpeed(EquippedRing);
+        rate += GetEquipmentAttackSpeed(EquippedAmulet);
+        rate += GetEquipmentAttackSpeed(EquippedBelt);
+        rate += GetEquipmentAttackSpeed(EquippedShield);
+        rate += GetEquipmentAttackSpeed(EquippedWing);
+
+        float speed = BaseAttackSpeed * (1f + rate / 100f);
+
+        // 잘못된 값으로 공격 애니메이션이 멈추거나 역재생되지 않도록 합니다.
+        return Mathf.Max(0.01f, speed);
+    }
+
+    // 장비 하나의 기본 공격력을 반환합니다.
+    // 비어 있는 장비와 공격력이 아닌 기본 옵션은 합산에서 제외합니다.
+    private double GetEquipmentAttack(Equipment equipment)
+    {
+        if (equipment == null || !equipment.IsValid())
+            return 0;
+
+        if (equipment.MainStatusType != EquipmentStatusType.Attack)
+            return 0;
+
+        // 제작 시 CSV와 레벨 배율이 이미 적용된 값입니다.
+        // 여기서 레벨 배율을 다시 적용하지 않습니다.
+        return equipment.MainStatusValue;
+    }
+
+    // 장비 하나에 붙은 크리티컬 확률 옵션을 합산합니다.
+    // 옵션 값이 5라면 크리티컬 확률에 5%포인트를 추가합니다.
+    private float GetEquipmentCriticalRate(Equipment equipment)
+    {
+        if (equipment == null || !equipment.IsValid())
+            return 0f;
+
+        if (equipment.Options == null)
+            return 0f;
+
+        float rate = 0f;
+
+        foreach (EquipmentOption option in equipment.Options)
+        {
+            if (option == null)
+                continue;
+
+            if (option.OptionType == EquipmentOptionType.CriticalRate)
+                rate += option.Value;
+        }
+
+        return rate;
+    }
+
+    // 현재 크리티컬 확률로 공격 한 번의 크리티컬 여부를 결정합니다.
+    public bool IsCriticalHit()
+    {
+        // 확률이 100%이면 반드시 크리티컬이 발생합니다.
+        if (TotalCriticalRate >= 100f)
+            return true;
+
+        return UnityEngine.Random.value < TotalCriticalRate / 100f;
+    }
+
+    // 장비 하나에 붙은 공격속도 옵션을 합산합니다.
+    // ASPD 옵션 값은 퍼센트 단위로 사용합니다.
+    private float GetEquipmentAttackSpeed(Equipment equipment)
+    {
+        if (equipment == null || !equipment.IsValid())
+            return 0f;
+
+        if (equipment.Options == null)
+            return 0f;
+
+        float rate = 0f;
+
+        foreach (EquipmentOption option in equipment.Options)
+        {
+            if (option == null)
+                continue;
+
+            if (option.OptionType == EquipmentOptionType.ASPD)
+                rate += option.Value;
+        }
+
+        return rate;
+    }
+
     //================================================================================================
     //========================================== 서버 저장 관련 =======================================
     //================================================================================================
@@ -278,7 +435,9 @@ public static class CurrencyExtension
 
         // 정수 부분이 1자리면 소수점 2자리,
         // 2자리면 소수점 1자리, 3자리면 소수점 없음
-        int decimals = number < 10d ? 2 : number < 100d ? 1 : 0;
+        //int decimals = number < 10d ? 2 : number < 100d ? 1 : 0;
+        int decimals = unitIndex == 0 ? 1 : number < 10d ? 2 : number < 100d ? 1 : 0;
+
 
         number = Math.Round(number, decimals, MidpointRounding.AwayFromZero);
 
@@ -290,15 +449,14 @@ public static class CurrencyExtension
         }
 
         // 반올림으로 정수 자릿수가 바뀌었을 수 있으므로 다시 결정
-        string format = number < 10d ? "0.##"
-                      : number < 100d ? "0.#"
-                      : "0";
+        string format = unitIndex == 0 ? "0.#"
+                        : number < 10d ? "0.##"
+                        : number < 100d ? "0.#"
+                        : "0";
 
         string sign = negative && number != 0d ? "-" : "";
 
-        return sign
-            + number.ToString(format, CultureInfo.InvariantCulture)
-            + GetUnit(unitIndex);
+        return sign + number.ToString(format, CultureInfo.InvariantCulture) + GetUnit(unitIndex);
     }
 
     private static string GetUnit(int index)

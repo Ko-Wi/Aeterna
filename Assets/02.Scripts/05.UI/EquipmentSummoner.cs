@@ -57,12 +57,12 @@ public class EquipmentSummoner : MonoBehaviour
             EquipmentSlotType.Staff,
             EquipmentSlotType.Helmet,
             EquipmentSlotType.Chest,
-            EquipmentSlotType.Pants,
             EquipmentSlotType.Boots,
             EquipmentSlotType.Ring,
             EquipmentSlotType.Amulet,
             EquipmentSlotType.Belt,
             EquipmentSlotType.Shield
+            //EquipmentSlotType.Wing,
         };
 
         

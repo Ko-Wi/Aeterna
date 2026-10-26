@@ -274,6 +274,10 @@ public class MonsterController : MonoBehaviour, IEnemy
 
         currentHp -= damage;
 
+        Vector3 damagePosition = hpBarPose != null ? hpBarPose.position : transform.position + Vector3.up;
+
+        gameManager.ShowDamage(damage, damagePosition, Cri);
+
         // 체력이 모두 소진되면 사망 처리 시작
         if (currentHp <= 0)
         {
@@ -312,6 +316,13 @@ public class MonsterController : MonoBehaviour, IEnemy
         {
             // 재생할 Animator가 없으면 즉시 회수
             OnDeathAnimationEnd();
+        }
+
+        // 실제로 처치한 보스만 기록합니다.
+        // OnDespawned()에는 넣지 않아야 실패 시 강제 회수와 구분됩니다.
+        if (_enemyCategory == EnemyCategory.Boss)
+        {
+            SpawnManager.Instance.OnBossDefeated();
         }
     }
 

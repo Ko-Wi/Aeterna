@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool isAttacking;
     [SerializeField] private float attackRange = 2.5f;
     [SerializeField] private int attackDamage = 10;
+    // 문자열 대신 캐시한 파라미터 번호로 Animator 값을 변경합니다.
+    private static readonly int attackSpeedHash = Animator.StringToHash("Speed");
     [SerializeField] private LayerMask monsterLayer;
     [SerializeField] private Transform attackCenter;
 
@@ -36,6 +38,13 @@ public class PlayerController : MonoBehaviour
     
     // 풀에서 재사용된 개체를 이전 타겟과 구분하기 위한 소환 번호
     private readonly Dictionary<MonsterController, uint> targetVersions = new Dictionary<MonsterController, uint>();
+
+    // 마지막으로 발사를 처리한 공격 애니메이션 회차
+    private int lastAttackLoop = -1;
+
+    // 같은 프레임에 투사체 발사가 중복 처리되는 것을 방지
+    private int lastFireFrame = -1;
+
     void Awake()
     {
         _anim = transform.GetComponentInChildren<Animator>();
@@ -67,6 +76,9 @@ public class PlayerController : MonoBehaviour
     {
         // 무기 장착 중이면 자동 공격 체크
         TryAutoAttack();
+
+        // 장비 교체나 Inspector 테스트로 변경된 공격속도를 반영합니다.
+        RefreshAttackSpeed();
     }
 
     //모든파츠 벗기
@@ -234,14 +246,43 @@ public class PlayerController : MonoBehaviour
 
         isAttacking = true;
 
+        // 새 공격이므로 애니메이션 회차 기록을 초기화합니다.
+        lastAttackLoop = -1;
+
         _anim.Play("Attack", 0, 0f);
+
+        //if (isAttacking) return;
+
+        //isAttacking = true;
+
+        //_anim.Play("Attack", 0, 0f);
     }
 
     public void EnemyHit()
     {
         if (!isAttacking) return;
 
-        List<MonsterController> targets = FindAttackTargets(maxProjectileTargetCount);
+        AnimatorStateInfo state = _anim.GetCurrentAnimatorStateInfo(0);
+
+        if (!state.IsName("Attack"))
+            return;
+
+        // normalizedTime: 0~1은 첫 바퀴, 1~2는 두 번째 바퀴입니다.
+        int attackLoop = Mathf.FloorToInt(state.normalizedTime);
+
+        // 이미 처리한 공격 회차의 이벤트는 무시합니다.
+        if (attackLoop <= lastAttackLoop)
+            return;
+
+        lastAttackLoop = attackLoop;
+
+        // 재개 시 여러 회차의 이벤트가 같은 프레임에 들어와도
+        // 한 번만 발사하고 나머지는 건너뜁니다.
+        if (lastFireFrame == Time.frameCount)
+            return;
+
+        List<MonsterController> targets =
+            FindAttackTargets(maxProjectileTargetCount);
 
         if (targets.Count == 0)
         {
@@ -249,55 +290,15 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        lastFireFrame = Time.frameCount;
+
+        // 멀티 타겟 기능은 유지합니다.
+        // 이번 공격에서 선택된 타겟마다 한 발씩 발사합니다.
         for (int i = 0; i < targets.Count; i++)
         {
             FireProjectile(targets[i]);
         }
     }
-    //private List<MonsterController> FindAttackTargets(int maxCount)
-    //{
-    //    List<MonsterController> targets = new List<MonsterController>();
-
-    //    Collider2D[] colliders = Physics2D.OverlapCircleAll(
-    //        attackCenter.position,
-    //        attackRange,
-    //        monsterLayer
-    //    );
-
-    //    if (colliders == null || colliders.Length == 0)
-    //        return targets;
-
-    //    List<MonsterController> tempTargets = new List<MonsterController>();
-
-    //    for (int i = 0; i < colliders.Length; i++)
-    //    {
-    //        MonsterController monster = colliders[i].GetComponent<MonsterController>();
-
-    //        if (monster == null) continue;
-    //        if (!monster.gameObject.activeInHierarchy) continue;
-
-    //        tempTargets.Add(monster);
-    //    }
-
-    //    // 가까운 몬스터 우선 정렬
-    //    tempTargets.Sort((a, b) =>
-    //    {
-    //        float distanceA = Vector2.Distance(attackCenter.position, a.transform.position);
-    //        float distanceB = Vector2.Distance(attackCenter.position, b.transform.position);
-
-    //        return distanceA.CompareTo(distanceB);
-    //    });
-
-    //    for (int i = 0; i < tempTargets.Count; i++)
-    //    {
-    //        if (targets.Count >= maxCount)
-    //            break;
-
-    //        targets.Add(tempTargets[i]);
-    //    }
-
-    //    return targets;
-    //}
 
     private List<MonsterController> FindAttackTargets(int maxCount)
     {
@@ -390,29 +391,9 @@ public class PlayerController : MonoBehaviour
     {
         if (target == null) return;
 
-        if (projectileList == null || projectileList.Count == 0)
-        {
-            Debug.LogWarning("projectileList에 Projectile 프리팹이 없습니다.");
-            return;
-        }
-
-        if (projectileIndex < 0 || projectileIndex >= projectileList.Count)
-        {
-            Debug.LogWarning("projectileIndex가 projectileList 범위를 벗어났습니다.");
-            return;
-        }
-
         GameObject projectilePrefab = projectileList[projectileIndex];
 
-        if (projectilePrefab == null)
-        {
-            Debug.LogWarning("선택된 Projectile 프리팹이 비어있습니다.");
-            return;
-        }
-
-        Vector3 spawnPos = attackPos != null
-            ? attackPos.position
-            : transform.position;
+        Vector3 spawnPos = attackPos != null ? attackPos.position : transform.position;
 
         GameObject projectileObj = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
 
@@ -425,7 +406,18 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        projectile.Init(target, attackDamage);
+        projectile.Init(target, myChar.GetTotalAttack());
+        // 투사체마다 크리티컬 여부를 한 번 판정합니다.
+        bool critical = myChar.IsCriticalHit();
+        // 착용 장비의 기본 공격력을 합산합니다.
+        double damage = myChar.TotalAttack;
+
+        // 크리티컬이면 지정한 배율을 적용합니다.
+        if (critical)
+            damage *= myChar.CriticalDamageMultiplier;
+
+        // 발사 시점의 최종 데미지와 판정 결과를 함께 전달합니다.
+        projectile.Init(target, damage, critical);
     }
 
     public void EndAttack()
@@ -435,6 +427,17 @@ public class PlayerController : MonoBehaviour
         _anim.Play("Idle");
     }
 
+    // 저장된 최종 공격속도가 바뀌었을 때만 Animator에 반영합니다.
+    // 장비 옵션을 여기서 다시 합산하지 않습니다.
+    private void RefreshAttackSpeed()
+    {
+        if (myChar == null || _anim == null)
+            return;
+
+        float speed = Mathf.Max(0.01f, myChar.TotalAttackSpeed);
+
+        _anim.SetFloat(attackSpeedHash, speed);
+    }
     private void OnDrawGizmosSelected()
     {
         Transform center = attackCenter != null ? attackCenter : transform;

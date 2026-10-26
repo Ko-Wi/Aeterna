@@ -61,6 +61,10 @@ public class SpawnManager : MonoBehaviour
     private bool isSpawning;             // 일반 몬스터 소환 진행 여부
     private bool bossSpawnAttempted;     // 보스 중복 소환 방지
 
+    // 현재 스테이지의 보스를 처치했는지 기록합니다.
+    // 보스를 먼저 잡아도 일반 몬스터가 남아 있으면 기다립니다.
+    private bool bossDefeated;
+
     [Header("자동 소환 설정")]
 
     // 몬스터가 반복 소환되는 시간 간격
@@ -94,7 +98,39 @@ public class SpawnManager : MonoBehaviour
         // 몬스터 자동 소환 시작
         StartSpawning();
     }
+    private void Update()
+    {
+        
+    }
 
+    // 몬스터 사망 처리가 끝난 후 클리어 조건을 확인합니다.
+    // 사망 함수 도중 다음 스테이지를 시작하지 않도록 LateUpdate에서 처리합니다.
+    private void LateUpdate()
+    {
+        if (myChar == null || !bossDefeated)
+            return;
+
+        // 마지막 웨이브의 모든 소환이 끝난 경우에만 클리어 가능합니다.
+        if (!bossSpawnAttempted ||
+            myChar.CurrentWave != LastWave ||
+            myChar.CurrentRound != 0)
+        {
+            return;
+        }
+
+        // 실패 전환이 시작된 상태에서는 클리어하지 않습니다.
+        if (uiManger.TransitionArea != null &&
+            uiManger.TransitionArea.activeSelf)
+        {
+            return;
+        }
+
+        // 보스 외에 살아 있는 일반 몬스터도 모두 처치해야 합니다.
+        if (myChar.CurrentMonsterCount > 0)
+            return;
+
+        CompleteStage();
+    }
     // 최초 시작 또는 스테이지 진행을 다시 시작할 때 호출
     public void StartSpawning()
     {
@@ -111,7 +147,12 @@ public class SpawnManager : MonoBehaviour
         myChar.CurrentRound = GetRoundsPerWave();
 
         bossSpawnAttempted = false;
+
+        // 새 스테이지 또는 후퇴 후 재도전이므로 처치 기록을 초기화합니다.
+        bossDefeated = false;
+
         isSpawning = true;
+
 
         spawnCoroutine = StartCoroutine(AutoSpawn());
     }
@@ -487,6 +528,12 @@ public class SpawnManager : MonoBehaviour
         if (monsterPool != null)
             monsterPool.DespawnAll();
 
+        // 실패한 시도의 보스 처치 기록이 남지 않도록 초기화합니다.
+        bossDefeated = false;
+
+        // 아래 기존 후퇴 처리 유지
+        StopSpawning();
+
         myChar.ResetMonsterCount();
 
         // 같은 등급에서 3웨이브 후퇴, 최소 1웨이브
@@ -515,6 +562,38 @@ public class SpawnManager : MonoBehaviour
         // 노멀 5스테이지 이상과 다른 등급은 기본 20회
         return RoundsPerWave;
     }
+
+    // 클리어한 스테이지의 소환을 종료하고 다음 스테이지를 시작합니다.
+    private void CompleteStage()
+    {
+        // 클리어가 중복 처리되지 않도록 먼저 기록을 해제합니다.
+        bossDefeated = false;
+
+        StopSpawning();
+        uiManger.ClearBoss();
+
+        // 다음 스테이지의 첫 웨이브부터 진행합니다.
+        myChar.CurrentStage++;
+        myChar.CurrentWave = 1;
+
+        // 라운드 수 초기화와 보스 관련 상태 초기화는
+        // 기존 StartSpawning()에서 처리합니다.
+        StartSpawning();
+    }
+
+    // 실제 보스 사망 처리에서 호출합니다.
+    // 강제 회수나 시간 초과는 보스 처치로 인정하지 않습니다.
+    public void OnBossDefeated()
+    {
+        if (!bossSpawnAttempted)
+            return;
+
+        bossDefeated = true;
+
+        // 보스를 잡았으므로 제한 시간과 보스 UI를 정리합니다.
+        uiManger.ClearBoss();
+    }
+
 
     // 설정된 시간 간격마다 일반 몬스터 반복 소환
     private IEnumerator AutoSpawn()

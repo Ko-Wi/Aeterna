@@ -89,12 +89,36 @@ public class GameManager : MonoBehaviour
             hpBarPool.Enqueue(obj);
         }
 
-        //for (int i = 0; i < damageFontPoolSize; i++)
-        //{
-        //    var obj = Instantiate(damageFontPrefab, Damage_UI);
-        //    obj.SetActive(false);
-        //    damageFontPool.Enqueue(obj);
-        //}
+        for (int i = 0; i < damageFontPoolSize; i++)
+        {
+            var obj = Instantiate(damageFontPrefab, Damage_UI);
+            obj.SetActive(false);
+            damageFontPool.Enqueue(obj);
+        }
+    }
+    //데미지폰트 풀링부분
+    public void ShowDamage(double damage, Vector3 position, bool critical = false)
+    {
+        GameObject obj;
+
+        if (damageFontPool.Count > 0)
+        {
+            obj = damageFontPool.Dequeue();
+        }
+        else
+        {
+            obj = Instantiate(damageFontPrefab, Damage_UI);
+        }
+
+        obj.SetActive(true);
+
+        obj.GetComponent<DamageFont>().Init(this, damage, position, critical);
+    }
+    //데미지폰트 풀링회수부분
+    public void ReturnDamageFont(GameObject obj)
+    {
+        obj.SetActive(false);
+        damageFontPool.Enqueue(obj);
     }
 
     //몬스터 Hp바 생성 혹은 풀로 얻게 하기
@@ -194,9 +218,6 @@ public class GameManager : MonoBehaviour
             case EquipmentSlotType.Helmet:
                 return new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6 };
 
-            case EquipmentSlotType.Pants:
-                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
-
             case EquipmentSlotType.Amulet:
                 return new int[] { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
 
@@ -211,6 +232,9 @@ public class GameManager : MonoBehaviour
 
             case EquipmentSlotType.Shield:
                 return new int[] { 1, 1, 1, 2, 2, 2, 2, 2, 2, 2 };
+
+            case EquipmentSlotType.Wing:
+                return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
 
             default:
                 Debug.LogWarning($"정의되지 않은 장비 슬롯입니다: {slotType}");
@@ -233,19 +257,19 @@ public class EquipmentGradeProbability
 
 public enum EquipmentSlotType
 {
-    None,
+    None = 0,
 
-    Wand,
-    Staff,
+    Wand = 1,
+    Staff = 2,
 
-    Chest,
-    Helmet,
-    Pants,
-    Amulet,
-    Ring,
-    Boots,
-    Belt,
-    Shield
+    Chest = 3,
+    Helmet = 4,
+    Amulet = 5,
+    Ring = 6,
+    Boots = 7,
+    Belt = 8,
+    Shield = 9,
+    Wing = 10
 }
 public enum EquipmentGrade
 {
