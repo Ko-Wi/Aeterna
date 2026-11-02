@@ -228,7 +228,7 @@ public class GameManager : MonoBehaviour
                 return new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
 
             case EquipmentSlotType.Belt:
-                return new int[] { 3, 3, 3, 3, 2, 3, 3, 3, 3, 3 };
+                return new int[] { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3 };
 
             case EquipmentSlotType.Shield:
                 return new int[] { 1, 1, 1, 2, 2, 2, 2, 2, 2, 2 };

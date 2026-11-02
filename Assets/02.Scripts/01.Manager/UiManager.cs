@@ -197,7 +197,7 @@ public class UiManager : MonoBehaviour
         if (myChar == null)
             return;
 
-        // 웨이브: Wave 12/30
+        // 웨이브: Wave nn/30
         if (displayedWave != myChar.CurrentWave)
         {
             displayedWave = myChar.CurrentWave;
@@ -872,6 +872,7 @@ public class UiManager : MonoBehaviour
         );
     }
 
+    // 추가 옵션 종류를 장비 UI에 표시할 이름으로 변환합니다.
     private string GetOptionName(EquipmentOptionType optionType)
     {
         switch (optionType)
@@ -881,9 +882,7 @@ public class UiManager : MonoBehaviour
             case EquipmentOptionType.CriticalDamage:
                 return "크리티컬 데미지";
             case EquipmentOptionType.BlockRate:
-                return "방어 확률";
-            case EquipmentOptionType.LifeSteal:
-                return "생명력 흡수";
+                return "블록 확률";
             case EquipmentOptionType.DoubleAttack:
                 return "더블 어택";
             case EquipmentOptionType.Damage:
@@ -892,8 +891,18 @@ public class UiManager : MonoBehaviour
                 return "공격속도";
             case EquipmentOptionType.SkillCoolTime:
                 return "스킬 쿨타임";
+            case EquipmentOptionType.SkillDamage:
+                return "스킬 데미지";
             case EquipmentOptionType.MultiShot:
                 return "다중 공격";
+            case EquipmentOptionType.MultiShotRate:
+                return "다중 공격 확률";
+            case EquipmentOptionType.StunRate:
+                return "기절 확률";
+            case EquipmentOptionType.Defense:
+                return "방어력";
+            case EquipmentOptionType.BasicDamage:
+                return "기본 공격 데미지";
             default:
                 return "";
         }

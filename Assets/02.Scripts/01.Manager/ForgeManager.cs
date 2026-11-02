@@ -427,7 +427,7 @@ public class ForgeManager : MonoBehaviour
         for (int i = 0; i < optionCount; i++)
         {
             EquipmentOptionType optionType = GetRandomOptionType(slotType);
-            int value = GetRandomOptionValue(optionType, grade);
+            int value = GetRandomOptionValue(optionType);
 
             options.Add(new EquipmentOption(optionType, value));
         }
@@ -441,27 +441,23 @@ public class ForgeManager : MonoBehaviour
         {
             case EquipmentGrade.Common:
             case EquipmentGrade.Magic:
-                return 0;
-
             case EquipmentGrade.Rare:
+                return 0;
             case EquipmentGrade.Heroic:
-                return UnityEngine.Random.Range(0, 2); // 0~1개
-
             case EquipmentGrade.Legendary:
             case EquipmentGrade.Unique:
             case EquipmentGrade.Mythic:
-                return UnityEngine.Random.Range(1, 3); // 1~2개
-
+                return 1;
             case EquipmentGrade.Ancient:
             case EquipmentGrade.Abyssal:
             case EquipmentGrade.Genesis:
                 return 2;
-
             default:
                 return 0;
         }
     }
 
+    // 장비에 부여할 추가 옵션 종류를 동일한 확률로 추첨합니다.
     private EquipmentOptionType GetRandomOptionType(EquipmentSlotType slotType)
     {
         EquipmentOptionType[] optionTypes =
@@ -469,31 +465,57 @@ public class ForgeManager : MonoBehaviour
             EquipmentOptionType.CriticalRate,
             EquipmentOptionType.CriticalDamage,
             EquipmentOptionType.BlockRate,
-            EquipmentOptionType.LifeSteal,
             EquipmentOptionType.DoubleAttack,
             EquipmentOptionType.Damage,
             EquipmentOptionType.ASPD,
             EquipmentOptionType.SkillCoolTime,
-            EquipmentOptionType.MultiShot
+            EquipmentOptionType.SkillDamage,
+            EquipmentOptionType.MultiShot,
+            EquipmentOptionType.MultiShotRate,
+            EquipmentOptionType.StunRate,
+            EquipmentOptionType.Defense,
+            EquipmentOptionType.BasicDamage
         };
 
         int randomIndex = UnityEngine.Random.Range(0, optionTypes.Length);
         return optionTypes[randomIndex];
     }
 
-    private int GetRandomOptionValue(EquipmentOptionType optionType, EquipmentGrade grade)
+    // 등급과 관계없이 옵션별 범위 안에서 정수 값을 추첨합니다.
+    // 정수 Random.Range는 최댓값을 포함하지 않으므로 상한에 1을 더합니다.
+    // 퍼센트 옵션은 1 = 1%, 다중 공격은 횟수, 방어력은 고정 수치로 저장합니다.
+    private int GetRandomOptionValue(EquipmentOptionType optionType)
     {
-        int gradeIndex = (int)grade;
-
         switch (optionType)
         {
-            case EquipmentOptionType.CriticalRate:
-                return UnityEngine.Random.Range(1 + gradeIndex, 3 + gradeIndex);
-
-            case EquipmentOptionType.CriticalDamage:
-                return UnityEngine.Random.Range(5 + gradeIndex * 2, 10 + gradeIndex * 3);
+            case EquipmentOptionType.CriticalRate:   // 치명타 확률: 1~12%
+                return UnityEngine.Random.Range(1, 13);
+            case EquipmentOptionType.CriticalDamage: // 치명타 데미지: 1~80%
+                return UnityEngine.Random.Range(1, 81);
+            case EquipmentOptionType.BlockRate:      // 방어 확률: 1~5%
+                return UnityEngine.Random.Range(1, 6);
+            case EquipmentOptionType.DoubleAttack:   // 더블 어택: 1~20%
+                return UnityEngine.Random.Range(1, 21);
+            case EquipmentOptionType.Damage:         // 데미지: 1~15%
+                return UnityEngine.Random.Range(1, 16);
+            case EquipmentOptionType.ASPD:           // 공격속도: 1~40%
+                return UnityEngine.Random.Range(1, 41);
+            case EquipmentOptionType.SkillCoolTime:  // 스킬 쿨타임 감소: 1~7%
+                return UnityEngine.Random.Range(1, 8);
+            case EquipmentOptionType.SkillDamage:    // 스킬 데미지: 1~30%
+                return UnityEngine.Random.Range(1, 31);
+            case EquipmentOptionType.MultiShot:      // 다중 공격 횟수: 1~3개
+                return UnityEngine.Random.Range(1, 4);
+            case EquipmentOptionType.MultiShotRate:  // 다중 공격 확률: 1~20%
+                return UnityEngine.Random.Range(1, 21);
+            case EquipmentOptionType.StunRate:       // 기절 확률: 1~5%
+                return UnityEngine.Random.Range(1, 6);
+            case EquipmentOptionType.Defense:        // 방어력: 10~130
+                return UnityEngine.Random.Range(10, 131);
+            case EquipmentOptionType.BasicDamage:    // 기본 공격력: 1~80%
+                return UnityEngine.Random.Range(1, 81);
             default:
-                return UnityEngine.Random.Range(5 + gradeIndex * 5, 10 + gradeIndex * 10);
+                return 0;
         }
     }
 }
@@ -508,12 +530,16 @@ public enum EquipmentOptionType
     CriticalRate,
     CriticalDamage,
     BlockRate,
-    LifeSteal,
     DoubleAttack,
     Damage,
     ASPD,
     SkillCoolTime,
-    MultiShot
+    SkillDamage,
+    MultiShot,
+    MultiShotRate,
+    StunRate,
+    Defense,
+    BasicDamage
 }
 
 
